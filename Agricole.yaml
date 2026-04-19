@@ -1,0 +1,199 @@
+openapi: 3.1.0
+info:
+  title: Agricultural Collectivity Federation API
+  description: OpenAPI specification for managing agricultural collectivities and members
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+
+  /collectivities:
+    get:
+      summary: Get all collectivities
+      responses:
+        '200':
+          description: List of collectivities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collectivity'
+
+    post:
+      summary: Create a new collectivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectivityInput'
+      responses:
+        '201':
+          description: Collectivity created
+
+  /collectivities/{id}:
+    get:
+      summary: Get a collectivity by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Collectivity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+
+    put:
+      summary: Update a collectivity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectivityInput'
+      responses:
+        '200':
+          description: Collectivity updated
+
+    delete:
+      summary: Delete a collectivity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Collectivity deleted
+
+  /members:
+    get:
+      summary: Get all members
+      responses:
+        '200':
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Member'
+
+    post:
+      summary: Create a new member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberInput'
+      responses:
+        '201':
+          description: Member created
+
+  /members/{id}:
+    get:
+      summary: Get a member by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Member found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+
+components:
+  schemas:
+
+    Collectivity:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Green Farmers Group
+        number:
+          type: string
+          example: COL-001
+        city:
+          type: string
+          example: Antananarivo
+        specialty:
+          type: string
+          example: Rice farming
+        creationDate:
+          type: string
+          format: date
+          example: 2024-01-01
+
+    CollectivityInput:
+      type: object
+      required:
+        - name
+        - number
+        - city
+        - specialty
+      properties:
+        name:
+          type: string
+        number:
+          type: string
+        city:
+          type: string
+        specialty:
+          type: string
+        creationDate:
+          type: string
+          format: date
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        collectivityId:
+          type: integer
+          example: 10
+
+    MemberInput:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - collectivityId
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        collectivityId:
+          type: integer
