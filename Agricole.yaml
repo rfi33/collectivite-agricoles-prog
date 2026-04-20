@@ -1,163 +1,391 @@
 openapi: 3.0.3
 info:
   title: API Fédération Agricole
-  description: openApi specification Federation Agricole
   version: 1.0.0
 
-tags:
-  - name: Collectivités
-
 paths:
+
   /collectivites:
     get:
-      tags: [Collectivités]
       summary: Lister toutes les collectivités
       responses:
         "200":
-          description: Liste des collectivités
+          description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/CollectiviteResponse"
-
     post:
-      tags: [Collectivités]
-      summary: Créer une nouvelle collectivité
-      description: Soumet une demande de création. Nécessite l'autorisation formelle de la fédération.
+      summary: Créer une collectivité
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CollectiviteCreate"
+              $ref: "#/components/schemas/CollectiviteRequest"
       responses:
         "201":
-          description: Collectivité créée
+          description: Créée
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CollectiviteResponse"
         "400":
-          description: Données invalides
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "403":
-          description: Autorisation de la fédération manquante
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/BadRequest"
         "422":
-          description: Conditions d'ouverture non remplies (membres insuffisants, postes non pourvus)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /collectivites/{id}:
     parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-
+      - $ref: "#/components/parameters/id"
     get:
-      tags: [Collectivités]
-      summary: Obtenir une collectivité par ID
+      summary: Obtenir une collectivité
       responses:
         "200":
-          description: Collectivité trouvée
+          description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CollectiviteResponse"
         "404":
-          description: Collectivité introuvable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
+          $ref: "#/components/responses/NotFound"
     put:
-      tags: [Collectivités]
-      summary: Mettre à jour une collectivité
+      summary: Modifier une collectivité
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CollectiviteUpdate"
+              $ref: "#/components/schemas/CollectiviteRequest"
       responses:
         "200":
-          description: Collectivité mise à jour
+          description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CollectiviteResponse"
         "404":
-          description: Collectivité introuvable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
+          $ref: "#/components/responses/NotFound"
     delete:
-      tags: [Collectivités]
       summary: Supprimer une collectivité
       responses:
         "204":
-          description: Supprimée avec succès
+          description: Supprimée
         "404":
-          description: Collectivité introuvable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/NotFound"
 
   /collectivites/{id}/autorisation:
+    parameters:
+      - $ref: "#/components/parameters/id"
     post:
-      tags: [Collectivités]
-      summary: Accorder l'autorisation d'ouverture (fédération uniquement)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      summary: Accorder l'autorisation d'ouverture
       responses:
         "200":
-          description: Autorisation accordée
+          description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CollectiviteResponse"
         "404":
-          description: Collectivité introuvable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: Autorisation déjà accordée
+          $ref: "#/components/responses/Conflict"
+
+  /collectivites/{id}/mandats:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Lister les mandats d'une collectivité
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: array
+                items:
+                  $ref: "#/components/schemas/MandatResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Créer un mandat (résultat des votes de fin d'année)
+      description: >
+        Un mandat dure une année civile. Chaque poste spécifique
+        (président, président adjoint, trésorier, secrétaire) ne peut être
+        occupé que par un seul membre. Un membre ne peut pas dépasser
+        2 mandats pour un même poste.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MandatRequest"
+      responses:
+        "201":
+          description: Mandat créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MandatResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /collectivites/{id}/mandats/{mandat_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/mandat_id"
+    get:
+      summary: Obtenir un mandat
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MandatResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/membres:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Lister les membres d'une collectivité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Admettre un nouveau membre
+      description: >
+        Le parrain doit être un membre confirmé avec plus de 90 jours
+        d'ancienneté. Les membres fondateurs doivent avoir au moins
+        6 mois d'ancienneté au sein de la fédération.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembreRequest"
+      responses:
+        "201":
+          description: Admis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembreResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /collectivites/{id}/membres/{membre_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/membre_id"
+    get:
+      summary: Obtenir un membre
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Modifier un membre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembreUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/membres/{membre_id}/transfert:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/membre_id"
+    post:
+      summary: Transférer un membre vers une autre collectivité
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nouvelle_collectivite_id]
+              properties:
+                nouvelle_collectivite_id:
+                  type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/membres/{membre_id}/demission:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/membre_id"
+    post:
+      summary: Enregistrer la démission d'un membre
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /collectivites/{id}/cotisations:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Lister les cotisations d'une collectivité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CotisationResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Enregistrer une cotisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CotisationRequest"
+      responses:
+        "201":
+          description: Cotisation enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CotisationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/cotisations/{cotisation_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/cotisation_id"
+    get:
+      summary: Obtenir une cotisation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CotisationResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Supprimer une cotisation
+      responses:
+        "204":
+          description: Supprimée
+        "404":
+          $ref: "#/components/responses/NotFound"
 
 components:
+
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    membre_id:
+      name: membre_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    mandat_id:
+      name: mandat_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    cotisation_id:
+      name: cotisation_id
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  responses:
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequest:
+      description: Données invalides
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntity:
+      description: Conditions métier non remplies
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Conflit avec l'état actuel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
   schemas:
-    CollectiviteCreate:
+    CollectiviteRequest:
       type: object
-      required:
-        - nom
-        - ville
-        - specialite
-        - membres_fondateurs
+      required: [nom, ville, specialite, membres_fondateurs]
       properties:
         nom:
           type: string
@@ -167,25 +395,14 @@ components:
           type: string
         membres_fondateurs:
           type: array
-          description: IDs des membres fondateurs (min 10, ancienneté ≥ 6 mois)
           minItems: 10
+          description: IDs des membres avec au moins 6 mois d'ancienneté dans la fédération
           items:
             type: integer
         postes_initiaux:
           type: array
-          description: Attribution des postes spécifiques
           items:
             $ref: "#/components/schemas/PosteAttribution"
-
-    CollectiviteUpdate:
-      type: object
-      properties:
-        nom:
-          type: string
-        ville:
-          type: string
-        specialite:
-          type: string
 
     CollectiviteResponse:
       type: object
@@ -208,21 +425,174 @@ components:
 
     PosteAttribution:
       type: object
-      required:
-        - membre_id
-        - poste
+      required: [membre_id, poste]
       properties:
         membre_id:
           type: integer
         poste:
+          $ref: "#/components/schemas/Poste"
+
+    MandatRequest:
+      type: object
+      required: [annee, postes]
+      properties:
+        annee:
+          type: integer
+          description: Année civile du mandat (ex:2025)
+        postes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PosteAttribution"
+
+    MandatResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        annee:
+          type: integer
+        collectivite_id:
+          type: integer
+        postes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PosteAttribution"
+
+    MembreRequest:
+      type: object
+      required: [nom, prenoms, date_naissance, genre, adresse, metier, telephone, email, parrain_id, paiement]
+      properties:
+        nom:
           type: string
-          enum:
-            - PRESIDENT
-            - PRESIDENT_ADJOINT
-            - TRESORIER
-            - SECRETAIRE
-            - MEMBRE_CONFIRME
-            - MEMBRE_JUNIOR
+        prenoms:
+          type: string
+        date_naissance:
+          type: string
+          format: date
+        genre:
+          $ref: "#/components/schemas/Genre"
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+          format: email
+        parrain_id:
+          type: integer
+          description: ID d'un membre confirmé avec plus de 90 jours d'ancienneté
+        paiement:
+          $ref: "#/components/schemas/Paiement"
+
+    MembreUpdate:
+      type: object
+      properties:
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+          format: email
+
+    MembreResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        prenoms:
+          type: string
+        date_naissance:
+          type: string
+          format: date
+        genre:
+          $ref: "#/components/schemas/Genre"
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+          format: email
+        date_adhesion:
+          type: string
+          format: date
+        poste:
+          $ref: "#/components/schemas/Poste"
+        collectivite_id:
+          type: integer
+        actif:
+          type: boolean
+
+    CotisationRequest:
+      type: object
+      required: [membre_id, montant, date, mode_paiement, type]
+      properties:
+        membre_id:
+          type: integer
+        montant:
+          type: number
+          description: Montant en MGA
+        date:
+          type: string
+          format: date
+        mode_paiement:
+          $ref: "#/components/schemas/ModePaiement"
+        type:
+          $ref: "#/components/schemas/TypeCotisation"
+
+    CotisationResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        membre_id:
+          type: integer
+        collectivite_id:
+          type: integer
+        montant:
+          type: number
+        date:
+          type: string
+          format: date
+        mode_paiement:
+          $ref: "#/components/schemas/ModePaiement"
+        type:
+          $ref: "#/components/schemas/TypeCotisation"
+
+    Poste:
+      type: string
+      enum: [PRESIDENT, PRESIDENT_ADJOINT, TRESORIER, SECRETAIRE, MEMBRE_CONFIRME, MEMBRE_JUNIOR]
+
+    Genre:
+      type: string
+      enum: [M, F]
+
+    TypeCotisation:
+      type: string
+      enum: [MENSUELLE, ANNUELLE, PONCTUELLE]
+
+    ModePaiement:
+      type: string
+      enum: [ESPECE, MOBILE_MONEY, VIREMENT_BANCAIRE]
+
+    Paiement:
+      type: object
+      required: [mode, reference]
+      properties:
+        mode:
+          type: string
+          enum: [MOBILE_MONEY, VIREMENT_BANCAIRE]
+        reference:
+          type: string
 
     Error:
       type: object
