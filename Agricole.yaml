@@ -1,113 +1,128 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
-  title: Agricultural Collectivity Federation API
-  description: OpenAPI specification for managing agricultural collectivities and members
+  title: API Fédération Agricole
+  description: openApi specification Federation Agricole
   version: 1.0.0
 
-servers:
-  - url: http://localhost:8080
+tags:
+  - name: Collectivités
 
 paths:
-
-  /collectivities:
+  /collectivites:
     get:
-      summary: Get all collectivities
+      tags: [Collectivités]
+      summary: Lister toutes les collectivités
       responses:
-        '200':
-          description: List of collectivities
+        "200":
+          description: Liste des collectivités
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Collectivity'
+                  $ref: "#/components/schemas/CollectiviteResponse"
 
     post:
-      summary: Create a new collectivity
+      tags: [Collectivités]
+      summary: Créer une nouvelle collectivité
+      description: Soumet une demande de création. Nécessite l'autorisation formelle de la fédération.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CollectivityInput'
+              $ref: "#/components/schemas/CollectiviteCreate"
       responses:
-        '201':
-          description: Collectivity created
-
-  /collectivities/{id}:
-    get:
-      summary: Get a collectivity by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Collectivity found
+        "201":
+          description: Collectivité créée
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Collectivity'
+                $ref: "#/components/schemas/CollectiviteResponse"
+        "400":
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Autorisation de la fédération manquante
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Conditions d'ouverture non remplies (membres insuffisants, postes non pourvus)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collectivites/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      tags: [Collectivités]
+      summary: Obtenir une collectivité par ID
+      responses:
+        "200":
+          description: Collectivité trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectiviteResponse"
+        "404":
+          description: Collectivité introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
     put:
-      summary: Update a collectivity
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CollectivityInput'
-      responses:
-        '200':
-          description: Collectivity updated
-
-    delete:
-      summary: Delete a collectivity
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Collectivity deleted
-
-  /members:
-    get:
-      summary: Get all members
-      responses:
-        '200':
-          description: List of members
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Member'
-
-    post:
-      summary: Create a new member
+      tags: [Collectivités]
+      summary: Mettre à jour une collectivité
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MemberInput'
+              $ref: "#/components/schemas/CollectiviteUpdate"
       responses:
-        '201':
-          description: Member created
+        "200":
+          description: Collectivité mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectiviteResponse"
+        "404":
+          description: Collectivité introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  /members/{id}:
-    get:
-      summary: Get a member by ID
+    delete:
+      tags: [Collectivités]
+      summary: Supprimer une collectivité
+      responses:
+        "204":
+          description: Supprimée avec succès
+        "404":
+          description: Collectivité introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collectivites/{id}/autorisation:
+    post:
+      tags: [Collectivités]
+      summary: Accorder l'autorisation d'ouverture (fédération uniquement)
       parameters:
         - name: id
           in: path
@@ -115,85 +130,104 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
-          description: Member found
+        "200":
+          description: Autorisation accordée
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Member'
+                $ref: "#/components/schemas/CollectiviteResponse"
+        "404":
+          description: Collectivité introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Autorisation déjà accordée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
+    CollectiviteCreate:
+      type: object
+      required:
+        - nom
+        - ville
+        - specialite
+        - membres_fondateurs
+      properties:
+        nom:
+          type: string
+        ville:
+          type: string
+        specialite:
+          type: string
+        membres_fondateurs:
+          type: array
+          description: IDs des membres fondateurs (min 10, ancienneté ≥ 6 mois)
+          minItems: 10
+          items:
+            type: integer
+        postes_initiaux:
+          type: array
+          description: Attribution des postes spécifiques
+          items:
+            $ref: "#/components/schemas/PosteAttribution"
 
-    Collectivity:
+    CollectiviteUpdate:
+      type: object
+      properties:
+        nom:
+          type: string
+        ville:
+          type: string
+        specialite:
+          type: string
+
+    CollectiviteResponse:
       type: object
       properties:
         id:
           type: integer
-          example: 1
-        name:
+        numero:
           type: string
-          example: Green Farmers Group
-        number:
+        nom:
           type: string
-          example: COL-001
-        city:
+        ville:
           type: string
-          example: Antananarivo
-        specialty:
+        specialite:
           type: string
-          example: Rice farming
-        creationDate:
+        date_creation:
           type: string
           format: date
-          example: 2024-01-01
+        autorisation_federation:
+          type: boolean
 
-    CollectivityInput:
+    PosteAttribution:
       type: object
       required:
-        - name
-        - number
-        - city
-        - specialty
+        - membre_id
+        - poste
       properties:
-        name:
+        membre_id:
+          type: integer
+        poste:
           type: string
-        number:
-          type: string
-        city:
-          type: string
-        specialty:
-          type: string
-        creationDate:
-          type: string
-          format: date
+          enum:
+            - PRESIDENT
+            - PRESIDENT_ADJOINT
+            - TRESORIER
+            - SECRETAIRE
+            - MEMBRE_CONFIRME
+            - MEMBRE_JUNIOR
 
-    Member:
+    Error:
       type: object
       properties:
-        id:
+        code:
           type: integer
-          example: 1
-        firstName:
+        message:
           type: string
-          example: John
-        lastName:
-          type: string
-          example: Doe
-        collectivityId:
-          type: integer
-          example: 10
-
-    MemberInput:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - collectivityId
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        collectivityId:
-          type: integer
