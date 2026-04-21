@@ -1,4 +1,4 @@
-CREATE USER collectivity_user with password '7891'
+CREATE USER collectivity_user with password '7891';
 
 CREATE DATABASE collectivity_db;
 
