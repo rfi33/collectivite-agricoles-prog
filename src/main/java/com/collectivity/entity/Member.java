@@ -1,4 +1,4 @@
-package com.collectivity.entity.entity;
+package com.collectivity.entity;
 
 import lombok.*;
 
