@@ -3,9 +3,33 @@ info:
   title: API Fédération Agricole
   version: 1.0.0
 
+tags:
+  - name: Collectivités
+    description: Gestion des collectivités (création, modification, suppression, autorisation)
+  - name: Mandats
+    description: Gestion des mandats des dirigeants d'une collectivité
+  - name: Membres
+    description: Gestion des membres (admission, modification, transfert, démission)
+  - name: Cotisations
+    description: Enregistrement et suivi des cotisations des membres
+  - name: Comptes
+    description: Gestion des comptes financiers (caisse, bancaire, mobile money)
+  - name: Activités
+    description: Gestion des activités d'une collectivité
+  - name: Présences
+    description: Enregistrement et suivi des présences aux activités
+  - name: Statistiques Collectivité
+    description: Statistiques et indicateurs d'une collectivité
+  - name: Fédération - Activités
+    description: Activités planifiées et gérées au niveau fédéral
+  - name: Fédération - Statistiques
+    description: Rapports et statistiques globales de la fédération
+
 paths:
+
   /collectivites:
     get:
+      tags: [Collectivités]
       summary: Lister toutes les collectivités
       responses:
         "200":
@@ -17,6 +41,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/CollectiviteResponse"
     post:
+      tags: [Collectivités]
       summary: Créer une collectivité
       requestBody:
         required: true
@@ -40,6 +65,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Collectivités]
       summary: Obtenir une collectivité
       responses:
         "200":
@@ -51,6 +77,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     put:
+      tags: [Collectivités]
       summary: Modifier une collectivité
       requestBody:
         required: true
@@ -68,6 +95,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     delete:
+      tags: [Collectivités]
       summary: Supprimer une collectivité
       responses:
         "204":
@@ -79,6 +107,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     post:
+      tags: [Collectivités]
       summary: Accorder l'autorisation d'ouverture
       responses:
         "200":
@@ -96,6 +125,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Mandats]
       summary: Lister les mandats d'une collectivité
       responses:
         "200":
@@ -109,6 +139,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Mandats]
       summary: Créer un mandat
       description: Mandat d'un an. Max 2 mandats par membre par poste.
       requestBody:
@@ -134,6 +165,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/mandat_id"
     get:
+      tags: [Mandats]
       summary: Obtenir un mandat
       responses:
         "200":
@@ -149,6 +181,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Membres]
       summary: Lister les membres d'une collectivité
       responses:
         "200":
@@ -162,6 +195,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Membres]
       summary: Admettre un nouveau membre
       description: Parrain confirmé requis (ancienneté > 90 jours). Membres fondateurs avec 6 mois d'ancienneté minimum.
       requestBody:
@@ -189,6 +223,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/membre_id"
     get:
+      tags: [Membres]
       summary: Obtenir un membre
       responses:
         "200":
@@ -200,6 +235,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     put:
+      tags: [Membres]
       summary: Modifier un membre
       requestBody:
         required: true
@@ -222,6 +258,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/membre_id"
     post:
+      tags: [Membres]
       summary: Transférer un membre vers une autre collectivité
       requestBody:
         required: true
@@ -248,6 +285,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/membre_id"
     post:
+      tags: [Membres]
       summary: Enregistrer la démission d'un membre
       responses:
         "200":
@@ -265,6 +303,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Cotisations]
       summary: Lister les cotisations d'une collectivité
       responses:
         "200":
@@ -278,6 +317,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Cotisations]
       summary: Enregistrer une cotisation
       requestBody:
         required: true
@@ -302,6 +342,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/cotisation_id"
     get:
+      tags: [Cotisations]
       summary: Obtenir une cotisation
       responses:
         "200":
@@ -313,6 +354,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     delete:
+      tags: [Cotisations]
       summary: Supprimer une cotisation
       responses:
         "204":
@@ -324,6 +366,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Comptes]
       summary: Lister les comptes d'une collectivité
       responses:
         "200":
@@ -337,6 +380,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Comptes]
       summary: Ajouter un compte
       description: Une seule caisse autorisée. Plusieurs comptes bancaires et mobile money possibles.
       requestBody:
@@ -364,6 +408,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/compte_id"
     get:
+      tags: [Comptes]
       summary: Obtenir un compte
       responses:
         "200":
@@ -375,6 +420,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     put:
+      tags: [Comptes]
       summary: Modifier un compte
       requestBody:
         required: true
@@ -392,6 +438,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     delete:
+      tags: [Comptes]
       summary: Supprimer un compte
       responses:
         "204":
@@ -404,6 +451,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/compte_id"
     get:
+      tags: [Comptes]
       summary: Obtenir le solde d'un compte
       parameters:
         - name: date
@@ -425,6 +473,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Activités]
       summary: Lister les activités d'une collectivité
       responses:
         "200":
@@ -438,6 +487,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Activités]
       summary: Créer une activité
       description: Types obligatoires (ASSEMBLEE_GENERALE, FORMATION_JUNIOR) ou exceptionnelle avec présence optionnelle ou ciblée.
       requestBody:
@@ -463,6 +513,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/activite_id"
     get:
+      tags: [Activités]
       summary: Obtenir une activité
       responses:
         "200":
@@ -474,6 +525,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     put:
+      tags: [Activités]
       summary: Modifier une activité
       requestBody:
         required: true
@@ -491,6 +543,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     delete:
+      tags: [Activités]
       summary: Supprimer une activité
       responses:
         "204":
@@ -503,6 +556,7 @@ paths:
       - $ref: "#/components/parameters/id"
       - $ref: "#/components/parameters/activite_id"
     get:
+      tags: [Présences]
       summary: Lister les présences d'une activité
       responses:
         "200":
@@ -516,6 +570,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
+      tags: [Présences]
       summary: Enregistrer la présence d'un membre
       description: Un membre d'une autre collectivité peut être inscrit mais sa présence ne compte pas dans son taux d'assiduité.
       requestBody:
@@ -544,6 +599,7 @@ paths:
       - $ref: "#/components/parameters/activite_id"
       - $ref: "#/components/parameters/membre_id"
     put:
+      tags: [Présences]
       summary: Modifier la présence d'un membre
       requestBody:
         required: true
@@ -561,80 +617,11 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /federation/activites:
-    get:
-      summary: Lister les activités de la fédération
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ActiviteResponse"
-    post:
-      summary: Créer une activité fédérale
-      description: Activité planifiée par la fédération, obligatoire ou non pour les collectivités.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ActiviteRequest"
-      responses:
-        "201":
-          description: Activité créée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ActiviteResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
-  /federation/activites/{activite_id}:
-    parameters:
-      - $ref: "#/components/parameters/activite_id"
-    get:
-      summary: Obtenir une activité fédérale
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ActiviteResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    put:
-      summary: Modifier une activité fédérale
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ActiviteRequest"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ActiviteResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    delete:
-      summary: Supprimer une activité fédérale
-      responses:
-        "204":
-          description: Supprimée
-        "404":
-          $ref: "#/components/responses/NotFound"
-
   /collectivites/{id}/statistiques:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Statistiques Collectivité]
       summary: Statistiques globales de la collectivité
       parameters:
         - name: mois
@@ -657,6 +644,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
+      tags: [Statistiques Collectivité]
       summary: Statistiques détaillées par membre actif
       parameters:
         - name: date_debut
@@ -680,6 +668,125 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StatMembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /federation/statistiques:
+    get:
+      tags: [Fédération - Statistiques]
+      summary: Rapport global des statistiques de toutes les collectivités
+      parameters:
+        - name: date_debut
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: date_fin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatFederationResponse"
+
+  /federation/statistiques/mensuel:
+    get:
+      tags: [Fédération - Statistiques]
+      summary: Rapport mensuel agrégé de toutes les collectivités
+      parameters:
+        - name: mois
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatFederationResponse"
+
+  /federation/activites:
+    get:
+      tags: [Fédération - Activités]
+      summary: Lister les activités de la fédération
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiviteResponse"
+    post:
+      tags: [Fédération - Activités]
+      summary: Créer une activité fédérale
+      description: Activité planifiée par la fédération, obligatoire ou non pour les collectivités.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "201":
+          description: Activité créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /federation/activites/{activite_id}:
+    parameters:
+      - $ref: "#/components/parameters/activite_id"
+    get:
+      tags: [Fédération - Activités]
+      summary: Obtenir une activité fédérale
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Fédération - Activités]
+      summary: Modifier une activité fédérale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Fédération - Activités]
+      summary: Supprimer une activité fédérale
+      responses:
+        "204":
+          description: Supprimée
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -1104,6 +1211,37 @@ components:
           type: number
           description: Montant potentiellement dû et non réglé en MGA
 
+    StatFederationResponse:
+      type: object
+      properties:
+        periode_debut:
+          type: string
+          format: date
+        periode_fin:
+          type: string
+          format: date
+        collectivites:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatFederationParCollectivite"
+
+    StatFederationParCollectivite:
+      type: object
+      properties:
+        collectivite_id:
+          type: integer
+        nom:
+          type: string
+        taux_assiduite:
+          type: number
+          description: Taux d'assiduité global en pourcentage (%)
+        pourcentage_cotisations_a_jour:
+          type: number
+          description: Pourcentage de membres à jour dans leurs cotisations (%)
+        nouveaux_adherents:
+          type: integer
+          description: Nombre de nouveaux membres admis sur la période
+
     Poste:
       type: string
       enum: [PRESIDENT, PRESIDENT_ADJOINT, TRESORIER, SECRETAIRE, MEMBRE_CONFIRME, MEMBRE_JUNIOR]
@@ -1155,7 +1293,6 @@ components:
         montant_cotisations_annuelles:
           type: number
           description: Montant des cotisations annuelles de la collectivité en MGA
-
 
     Error:
       type: object
