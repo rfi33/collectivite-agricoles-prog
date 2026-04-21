@@ -4,7 +4,6 @@ info:
   version: 1.0.0
 
 paths:
-
   /collectivites:
     get:
       summary: Lister toutes les collectivités
@@ -499,6 +498,69 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /collectivites/{id}/activites/{activite_id}/presences:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/activite_id"
+    get:
+      summary: Lister les présences d'une activité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PresenceResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Enregistrer la présence d'un membre
+      description: Un membre d'une autre collectivité peut être inscrit mais sa présence ne compte pas dans son taux d'assiduité.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceRequest"
+      responses:
+        "201":
+          description: Présence enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /collectivites/{id}/activites/{activite_id}/presences/{membre_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/activite_id"
+      - $ref: "#/components/parameters/membre_id"
+    put:
+      summary: Modifier la présence d'un membre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /federation/activites:
     get:
       summary: Lister les activités de la fédération
@@ -569,74 +631,11 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /collectivites/{id}/activites/{activite_id}/presences:
-    parameters:
-      - $ref: "#/components/parameters/id"
-      - $ref: "#/components/parameters/activite_id"
-    get:
-      summary: Lister les présences d'une activité
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/PresenceResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    post:
-      summary: Enregistrer la présence d'un membre
-      description: Un membre d'une autre collectivité peut être inscrit mais sa présence ne compte pas dans son taux d'assiduité.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PresenceRequest"
-      responses:
-        "201":
-          description: Présence enregistrée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PresenceResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-
-  /collectivites/{id}/activites/{activite_id}/presences/{membre_id}:
-    parameters:
-      - $ref: "#/components/parameters/id"
-      - $ref: "#/components/parameters/activite_id"
-      - $ref: "#/components/parameters/membre_id"
-    put:
-      summary: Modifier la présence d'un membre (excuser une absence)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PresenceUpdate"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PresenceResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
   /collectivites/{id}/statistiques:
     parameters:
       - $ref: "#/components/parameters/id"
     get:
-      summary: Statistiques globales de la collectivité (rapport mensuel fédération)
+      summary: Statistiques globales de la collectivité
       parameters:
         - name: mois
           in: query
@@ -685,6 +684,7 @@ paths:
           $ref: "#/components/responses/NotFound"
 
 components:
+
   parameters:
     id:
       name: id
@@ -827,7 +827,7 @@ components:
 
     MembreRequest:
       type: object
-      required: [nom, prenoms, date_naissance, genre, adresse, metier, telephone, email, parrain_id, paiement]
+      required: [nom, prenoms, date_naissance, genre, adresse, metier, telephone, email, parrains, paiement]
       properties:
         nom:
           type: string
@@ -847,10 +847,16 @@ components:
         email:
           type: string
           format: email
-        parrain_id:
-          type: integer
+        parrains:
+          type: array
+          minItems: 2
+          description: >-
+            Au moins 2 membres confirmés. Le nombre de parrains de la collectivité
+            cible doit être >= au nombre de parrains extérieurs.
+          items:
+            $ref: "#/components/schemas/ParrainInfo"
         paiement:
-          $ref: "#/components/schemas/Paiement"
+          $ref: "#/components/schemas/PaiementAdhesion"
 
     MembreUpdate:
       type: object
@@ -988,25 +994,46 @@ components:
           type: number
           description: Solde en MGA
 
-    Poste:
-      type: string
-      enum: [PRESIDENT, PRESIDENT_ADJOINT, TRESORIER, SECRETAIRE, MEMBRE_CONFIRME, MEMBRE_JUNIOR]
+    ActiviteRequest:
+      type: object
+      required: [titre, date, type]
+      properties:
+        titre:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/TypeActivite"
+        obligatoire:
+          type: boolean
+          default: true
+        membres_cibles:
+          type: array
+          description: IDs des membres concernés (si présence ciblée)
+          items:
+            type: integer
 
-    Genre:
-      type: string
-      enum: [M, F]
-
-    TypeCotisation:
-      type: string
-      enum: [MENSUELLE, ANNUELLE, PONCTUELLE]
-
-    ModePaiement:
-      type: string
-      enum: [ESPECE, MOBILE_MONEY, VIREMENT_BANCAIRE]
-
-    TypeCompte:
-      type: string
-      enum: [CAISSE, BANCAIRE, MOBILE_MONEY]
+    ActiviteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        titre:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/TypeActivite"
+        obligatoire:
+          type: boolean
+        membres_cibles:
+          type: array
+          items:
+            type: integer
+        collectivite_id:
+          type: integer
 
     PresenceRequest:
       type: object
@@ -1077,64 +1104,58 @@ components:
           type: number
           description: Montant potentiellement dû et non réglé en MGA
 
-    StatutPresence:
+    Poste:
       type: string
-      enum: [PRESENT, ABSENT, EXCUSE]
+      enum: [PRESIDENT, PRESIDENT_ADJOINT, TRESORIER, SECRETAIRE, MEMBRE_CONFIRME, MEMBRE_JUNIOR]
 
-    ActiviteRequest:
-      type: object
-      required: [titre, date, type]
-      properties:
-        titre:
-          type: string
-        date:
-          type: string
-          format: date
-        type:
-          $ref: "#/components/schemas/TypeActivite"
-        obligatoire:
-          type: boolean
-          default: true
-        membres_cibles:
-          type: array
-          description: IDs des membres concernés (si présence ciblée)
-          items:
-            type: integer
+    Genre:
+      type: string
+      enum: [M, F]
 
-    ActiviteResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-        titre:
-          type: string
-        date:
-          type: string
-          format: date
-        type:
-          $ref: "#/components/schemas/TypeActivite"
-        obligatoire:
-          type: boolean
-        membres_cibles:
-          type: array
-          items:
-            type: integer
-        collectivite_id:
-          type: integer
+    TypeCotisation:
+      type: string
+      enum: [MENSUELLE, ANNUELLE, PONCTUELLE]
+
+    ModePaiement:
+      type: string
+      enum: [ESPECE, MOBILE_MONEY, VIREMENT_BANCAIRE]
+
+    TypeCompte:
+      type: string
+      enum: [CAISSE, BANCAIRE, MOBILE_MONEY]
 
     TypeActivite:
       type: string
       enum: [ASSEMBLEE_GENERALE, FORMATION_JUNIOR, EXCEPTIONNELLE, FEDERALE]
 
-    Paiement:
+    StatutPresence:
+      type: string
+      enum: [PRESENT, ABSENT, EXCUSE]
+
+    ParrainInfo:
+      type: object
+      required: [membre_id, relation]
+      properties:
+        membre_id:
+          type: integer
+        relation:
+          type: string
+          description: "Nature de la relation (famille, ami, collègue, etc.)"
+
+    PaiementAdhesion:
       type: object
       required: [mode, reference]
+      description: Frais adhésion (50 000 MGA) + cotisations annuelles imposées par la collectivité
       properties:
         mode:
           type: string
           enum: [MOBILE_MONEY, VIREMENT_BANCAIRE]
         reference:
           type: string
+        montant_cotisations_annuelles:
+          type: number
+          description: Montant des cotisations annuelles de la collectivité en MGA
+
 
     Error:
       type: object
