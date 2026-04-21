@@ -1,8 +1,14 @@
 package com.collectivity.controller;
 
-import com.collectivity.entity.Member;
-import org.springframework.web.bind.annotation.*;
+import com.collectivity.dto.request.CreateMemberRequest;
+import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.service.MemberService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -10,14 +16,15 @@ import java.util.List;
 @RequestMapping("/members")
 public class MemberController {
 
-    private final MemberService service = new MemberService();
+    private final MemberService memberService;
+
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
+    }
 
     @PostMapping
-    public List<Member> create(@RequestBody List<Member> members,
-                               @RequestParam String collectivityId) {
-
-        return members.stream()
-                .map(m -> service.create(m, collectivityId))
-                .toList();
+    public ResponseEntity<List<MemberResponse>> create(@RequestBody List<CreateMemberRequest> requests) {
+        List<MemberResponse> responses = memberService.createAll(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
     }
 }

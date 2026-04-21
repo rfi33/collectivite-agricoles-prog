@@ -8,18 +8,20 @@ import java.util.List;
 
 public class CreateMemberRequest {
 
-    public String           firstName;
-    public String           lastName;
-    public LocalDate        birthDate;
-    public Gender           gender;
-    public String           address;
-    public String           profession;
-    public String           phoneNumber;
-    public String           email;
+    public String firstName;
+    public String lastName;
+    public LocalDate birthDate;
+    public Gender gender;
+    public String address;
+    public String profession;
+    public String phoneNumber;
+    public String email;
     public MemberOccupation occupation;
 
-    public String                  collectivityIdentifier;
+    public String collectivityIdentifier;
 
     public List<RefereeInfoRequest> referees;
 
+    public Boolean registrationFeePaid;
+    public Boolean membershipDuesPaid;
 }
