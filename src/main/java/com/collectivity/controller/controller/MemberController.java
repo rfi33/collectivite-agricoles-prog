@@ -1,8 +1,8 @@
-package controller;
+package com.collectivity.controller.controller;
 
-import entity.Member;
+import com.collectivity.entity.entity.Member;
 import org.springframework.web.bind.annotation.*;
-import service.MemberService;
+import com.collectivity.service.service.MemberService;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
-package service;
+package com.collectivity.service.service;
 
-import entity.Member;
-import repository.MemberRepository;
+import com.collectivity.entity.entity.Member;
+import com.collectivity.repository.repository.MemberRepository;
 
 import java.util.List;
 

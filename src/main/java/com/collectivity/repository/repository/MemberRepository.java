@@ -1,7 +1,7 @@
-package repository;
+package com.collectivity.repository.repository;
 
 import config.DBConfig;
-import entity.Member;
+import com.collectivity.entity.entity.Member;
 
 import java.sql.*;
 import java.util.ArrayList;
