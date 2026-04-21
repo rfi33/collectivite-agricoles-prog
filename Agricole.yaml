@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: API Fédération Agricole
   version: 1.0.0
@@ -422,8 +422,269 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-components:
+  /collectivites/{id}/activites:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Lister les activités d'une collectivité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Créer une activité
+      description: Types obligatoires (ASSEMBLEE_GENERALE, FORMATION_JUNIOR) ou exceptionnelle avec présence optionnelle ou ciblée.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "201":
+          description: Activité créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
+  /collectivites/{id}/activites/{activite_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/activite_id"
+    get:
+      summary: Obtenir une activité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Modifier une activité
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Supprimer une activité
+      responses:
+        "204":
+          description: Supprimée
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /federation/activites:
+    get:
+      summary: Lister les activités de la fédération
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiviteResponse"
+    post:
+      summary: Créer une activité fédérale
+      description: Activité planifiée par la fédération, obligatoire ou non pour les collectivités.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "201":
+          description: Activité créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /federation/activites/{activite_id}:
+    parameters:
+      - $ref: "#/components/parameters/activite_id"
+    get:
+      summary: Obtenir une activité fédérale
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Modifier une activité fédérale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiviteRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Supprimer une activité fédérale
+      responses:
+        "204":
+          description: Supprimée
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/activites/{activite_id}/presences:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/activite_id"
+    get:
+      summary: Lister les présences d'une activité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PresenceResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Enregistrer la présence d'un membre
+      description: Un membre d'une autre collectivité peut être inscrit mais sa présence ne compte pas dans son taux d'assiduité.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceRequest"
+      responses:
+        "201":
+          description: Présence enregistrée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /collectivites/{id}/activites/{activite_id}/presences/{membre_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/activite_id"
+      - $ref: "#/components/parameters/membre_id"
+    put:
+      summary: Modifier la présence d'un membre (excuser une absence)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/statistiques:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Statistiques globales de la collectivité (rapport mensuel fédération)
+      parameters:
+        - name: mois
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatCollectiviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/statistiques/membres:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Statistiques détaillées par membre actif
+      parameters:
+        - name: date_debut
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: date_fin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StatMembreResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
   parameters:
     id:
       name: id
@@ -451,6 +712,12 @@ components:
         type: integer
     compte_id:
       name: compte_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    activite_id:
+      name: activite_id
       in: path
       required: true
       schema:
@@ -740,6 +1007,124 @@ components:
     TypeCompte:
       type: string
       enum: [CAISSE, BANCAIRE, MOBILE_MONEY]
+
+    PresenceRequest:
+      type: object
+      required: [membre_id, statut]
+      properties:
+        membre_id:
+          type: integer
+        statut:
+          $ref: "#/components/schemas/StatutPresence"
+        motif_absence:
+          type: string
+
+    PresenceUpdate:
+      type: object
+      required: [statut]
+      properties:
+        statut:
+          $ref: "#/components/schemas/StatutPresence"
+        motif_absence:
+          type: string
+
+    PresenceResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        membre_id:
+          type: integer
+        activite_id:
+          type: integer
+        statut:
+          $ref: "#/components/schemas/StatutPresence"
+        motif_absence:
+          type: string
+        membre_exterieur:
+          type: boolean
+
+    StatCollectiviteResponse:
+      type: object
+      properties:
+        collectivite_id:
+          type: integer
+        mois:
+          type: string
+          format: date
+        nombre_membres:
+          type: integer
+        taux_assiduite:
+          type: number
+          description: Taux en pourcentage (%)
+
+    StatMembreResponse:
+      type: object
+      properties:
+        membre_id:
+          type: integer
+        nom:
+          type: string
+        prenoms:
+          type: string
+        taux_assiduite:
+          type: number
+          description: Taux en pourcentage (%)
+        montant_encaisse:
+          type: number
+          description: Total des cotisations payées en MGA
+        montant_impaye:
+          type: number
+          description: Montant potentiellement dû et non réglé en MGA
+
+    StatutPresence:
+      type: string
+      enum: [PRESENT, ABSENT, EXCUSE]
+
+    ActiviteRequest:
+      type: object
+      required: [titre, date, type]
+      properties:
+        titre:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/TypeActivite"
+        obligatoire:
+          type: boolean
+          default: true
+        membres_cibles:
+          type: array
+          description: IDs des membres concernés (si présence ciblée)
+          items:
+            type: integer
+
+    ActiviteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        titre:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          $ref: "#/components/schemas/TypeActivite"
+        obligatoire:
+          type: boolean
+        membres_cibles:
+          type: array
+          items:
+            type: integer
+        collectivite_id:
+          type: integer
+
+    TypeActivite:
+      type: string
+      enum: [ASSEMBLEE_GENERALE, FORMATION_JUNIOR, EXCEPTIONNELLE, FEDERALE]
 
     Paiement:
       type: object
