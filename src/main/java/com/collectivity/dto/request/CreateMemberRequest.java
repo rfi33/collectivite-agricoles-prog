@@ -1,18 +1,13 @@
-package com.collectivity.entity;
+package com.collectivity.dto.request;
 
-import lombok.*;
+import com.collectivity.entity.Gender;
+import com.collectivity.entity.MemberOccupation;
 
 import java.time.LocalDate;
 import java.util.List;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode
-public class Member {
-    public String           id;
+public class CreateMemberRequest {
+
     public String           firstName;
     public String           lastName;
     public LocalDate        birthDate;
@@ -22,8 +17,9 @@ public class Member {
     public String           phoneNumber;
     public String           email;
     public MemberOccupation occupation;
-    public String           collectivityId;
-    public LocalDate        joinDate;
 
-    public List<Member>     referees;
+    public String                  collectivityIdentifier;
+
+    public List<RefereeInfoRequest> referees;
+
 }
