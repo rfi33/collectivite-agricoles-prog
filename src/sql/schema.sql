@@ -10,29 +10,29 @@ CREATE TYPE member_occupation AS ENUM (
 );
 
 CREATE TABLE collectivities (
-                                id                  SERIAL PRIMARY KEY,
+                                id                  VARCHAR(36)  PRIMARY KEY,
                                 location            VARCHAR(255) NOT NULL,
                                 federation_approval BOOLEAN      NOT NULL DEFAULT FALSE,
-                                president_id        INTEGER,
-                                vice_president_id   INTEGER,
-                                treasurer_id        INTEGER,
-                                secretary_id        INTEGER
+                                president_id        VARCHAR(36),
+                                vice_president_id   VARCHAR(36),
+                                treasurer_id        VARCHAR(36),
+                                secretary_id        VARCHAR(36)
 );
 CREATE TABLE members (
-                         id                    SERIAL PRIMARY KEY,
-                         first_name            VARCHAR(100) NOT NULL,
-                         last_name             VARCHAR(100) NOT NULL,
-                         birth_date            DATE         NOT NULL,
-                         gender                gender,
-                         address               VARCHAR(255),
-                         profession            VARCHAR(100),
-                         phone_number          VARCHAR(20),
-                         email                 VARCHAR(150),
+                         id                    VARCHAR(36)       PRIMARY KEY,
+                         first_name            VARCHAR(100)      NOT NULL,
+                         last_name             VARCHAR(100)      NOT NULL,
+                         birth_date            DATE              NOT NULL,
+                         gender                gender            NOT NULL,
+                         address               VARCHAR(255)      NOT NULL,
+                         profession            VARCHAR(100)      NOT NULL,
+                         phone_number          VARCHAR(20)       NOT NULL,
+                         email                 VARCHAR(150)      NOT NULL,
                          occupation            member_occupation NOT NULL DEFAULT 'JUNIOR',
-                         collectivity_id       INTEGER REFERENCES collectivities(id),
-                         join_date             DATE          NOT NULL DEFAULT CURRENT_DATE,
-                         registration_fee_paid BOOLEAN       NOT NULL DEFAULT FALSE,
-                         membership_dues_paid  BOOLEAN       NOT NULL DEFAULT FALSE
+                         collectivity_id       VARCHAR(36)       REFERENCES collectivities(id),
+                         join_date             DATE              NOT NULL DEFAULT CURRENT_DATE,
+                         registration_fee_paid BOOLEAN           NOT NULL DEFAULT FALSE,
+                         membership_dues_paid  BOOLEAN           NOT NULL DEFAULT FALSE
 );
 
 ALTER TABLE collectivities
@@ -46,15 +46,15 @@ ALTER TABLE collectivities
         FOREIGN KEY (secretary_id)      REFERENCES members(id);
 
 CREATE TABLE collectivity_members (
-                                      collectivity_id INTEGER NOT NULL REFERENCES collectivities(id),
-                                      member_id       INTEGER NOT NULL REFERENCES members(id),
+                                      collectivity_id VARCHAR(36) NOT NULL REFERENCES collectivities(id),
+                                      member_id       VARCHAR(36) NOT NULL REFERENCES members(id),
                                       PRIMARY KEY (collectivity_id, member_id)
 );
 
 CREATE TABLE member_referees (
-                                 member_id       INTEGER      NOT NULL REFERENCES members(id),
-                                 referee_id      INTEGER      NOT NULL REFERENCES members(id),
-                                 relation        VARCHAR(100) NOT NULL,
+                                 member_id  VARCHAR(36)  NOT NULL REFERENCES members(id),
+                                 referee_id VARCHAR(36)  NOT NULL REFERENCES members(id),
+                                 relation   VARCHAR(100) NOT NULL,
                                  PRIMARY KEY (member_id, referee_id),
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
 );

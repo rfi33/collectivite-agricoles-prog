@@ -1,24 +1,26 @@
 package com.collectivity.entity;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
-
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
-
 public class Collectivity {
-    public String id;
-    public String location;
-    public boolean federationApproval;
-
-    public String president;
-    public String vicePresident;
-    public String treasurer;
-    public String secretary;
-
+    public String       id;
+    public String       location;
+    public boolean      federationApproval;
+    public Member       president;
+    public Member       vicePresident;
+    public Member       treasurer;
+    public Member       secretary;
     public List<Member> members;
 }
