@@ -4,9 +4,8 @@ info:
   description: Spécification OpenAPI pour la gestion de la fédération de collectivités agricoles
   version: 1.0.0
 
-  servers:
-    - url: 'http://localhost:8080'
-
+servers:
+  - url: 'http://localhost:8080'
 tags:
   - name: Collectivités
     description: Gestion des collectivités (création, modification, suppression, autorisation)
