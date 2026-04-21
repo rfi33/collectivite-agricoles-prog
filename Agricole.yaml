@@ -110,12 +110,8 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
     post:
-      summary: Créer un mandat (résultat des votes de fin d'année)
-      description: >
-        Un mandat dure une année civile. Chaque poste spécifique
-        (président, président adjoint, trésorier, secrétaire) ne peut être
-        occupé que par un seul membre. Un membre ne peut pas dépasser
-        2 mandats pour un même poste.
+      summary: Créer un mandat
+      description: Mandat d'un an. Max 2 mandats par membre par poste.
       requestBody:
         required: true
         content:
@@ -168,10 +164,7 @@ paths:
           $ref: "#/components/responses/NotFound"
     post:
       summary: Admettre un nouveau membre
-      description: >
-        Le parrain doit être un membre confirmé avec plus de 90 jours
-        d'ancienneté. Les membres fondateurs doivent avoir au moins
-        6 mois d'ancienneté au sein de la fédération.
+      description: Parrain confirmé requis (ancienneté > 90 jours). Membres fondateurs avec 6 mois d'ancienneté minimum.
       requestBody:
         required: true
         content:
@@ -328,6 +321,107 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /collectivites/{id}/comptes:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Lister les comptes d'une collectivité
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Ajouter un compte
+      description: Une seule caisse autorisée. Plusieurs comptes bancaires et mobile money possibles.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompteRequest"
+      responses:
+        "201":
+          description: Compte créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /collectivites/{id}/comptes/{compte_id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/compte_id"
+    get:
+      summary: Obtenir un compte
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Modifier un compte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompteRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Supprimer un compte
+      responses:
+        "204":
+          description: Supprimé
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /collectivites/{id}/comptes/{compte_id}/solde:
+    parameters:
+      - $ref: "#/components/parameters/id"
+      - $ref: "#/components/parameters/compte_id"
+    get:
+      summary: Obtenir le solde d'un compte
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoldeResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
 components:
 
   parameters:
@@ -351,6 +445,12 @@ components:
         type: integer
     cotisation_id:
       name: cotisation_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    compte_id:
+      name: compte_id
       in: path
       required: true
       schema:
@@ -383,6 +483,7 @@ components:
             $ref: "#/components/schemas/Error"
 
   schemas:
+
     CollectiviteRequest:
       type: object
       required: [nom, ville, specialite, membres_fondateurs]
@@ -438,7 +539,6 @@ components:
       properties:
         annee:
           type: integer
-          description: Année civile du mandat (ex:2025)
         postes:
           type: array
           items:
@@ -482,7 +582,6 @@ components:
           format: email
         parrain_id:
           type: integer
-          description: ID d'un membre confirmé avec plus de 90 jours d'ancienneté
         paiement:
           $ref: "#/components/schemas/Paiement"
 
@@ -540,7 +639,6 @@ components:
           type: integer
         montant:
           type: number
-          description: Montant en MGA
         date:
           type: string
           format: date
@@ -568,6 +666,61 @@ components:
         type:
           $ref: "#/components/schemas/TypeCotisation"
 
+    CompteRequest:
+      type: object
+      required: [type, titulaire]
+      properties:
+        type:
+          $ref: "#/components/schemas/TypeCompte"
+        titulaire:
+          type: string
+        banque:
+          type: string
+          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
+        numero_compte:
+          type: string
+          pattern: '^\d{23}$'
+          description: "Format : BBBBB GGGGG CCCCCCCCCCC KK (23 chiffres)"
+        service_mobile:
+          type: string
+          enum: [ORANGE_MONEY, MVOLA, AIRTEL_MONEY]
+        telephone:
+          type: string
+
+    CompteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          $ref: "#/components/schemas/TypeCompte"
+        titulaire:
+          type: string
+        banque:
+          type: string
+        numero_compte:
+          type: string
+        service_mobile:
+          type: string
+        telephone:
+          type: string
+        solde:
+          type: number
+        collectivite_id:
+          type: integer
+
+    SoldeResponse:
+      type: object
+      properties:
+        compte_id:
+          type: integer
+        date:
+          type: string
+          format: date
+        solde:
+          type: number
+          description: Solde en MGA
+
     Poste:
       type: string
       enum: [PRESIDENT, PRESIDENT_ADJOINT, TRESORIER, SECRETAIRE, MEMBRE_CONFIRME, MEMBRE_JUNIOR]
@@ -583,6 +736,10 @@ components:
     ModePaiement:
       type: string
       enum: [ESPECE, MOBILE_MONEY, VIREMENT_BANCAIRE]
+
+    TypeCompte:
+      type: string
+      enum: [CAISSE, BANCAIRE, MOBILE_MONEY]
 
     Paiement:
       type: object
