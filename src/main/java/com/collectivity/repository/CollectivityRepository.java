@@ -1,6 +1,7 @@
 package com.collectivity.repository;
 
 import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.Member;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -66,11 +67,46 @@ public class CollectivityRepository {
         }
     }
 
-    public boolean existsByNameOrNumber(String name, String number) {
-        String sql = "SELECT 1 FROM collectivities WHERE name = ? OR number = ?";
+    public Collectivity findByIdWithStructure(String id) {
+        String sql = """
+            SELECT
+                c.id, c.name, c.number, c.location, c.federation_approval,
+                p.id  AS p_id,  p.first_name  AS p_fn,  p.last_name  AS p_ln,
+                vp.id AS vp_id, vp.first_name AS vp_fn, vp.last_name AS vp_ln,
+                t.id  AS t_id,  t.first_name  AS t_fn,  t.last_name  AS t_ln,
+                s.id  AS s_id,  s.first_name  AS s_fn,  s.last_name  AS s_ln
+            FROM collectivities c
+            LEFT JOIN members p  ON c.president_id      = p.id
+            LEFT JOIN members vp ON c.vice_president_id = vp.id
+            LEFT JOIN members t  ON c.treasurer_id      = t.id
+            LEFT JOIN members s  ON c.secretary_id      = s.id
+            WHERE c.id = ?
+        """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) return null;
+            Collectivity c = mapRow(rs);
+            c.president     = mapStructureMember(rs, "p");
+            c.vicePresident = mapStructureMember(rs, "vp");
+            c.treasurer     = mapStructureMember(rs, "t");
+            c.secretary     = mapStructureMember(rs, "s");
+            return c;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find collectivity with structure id=" + id, e);
+        }
+    }
+
+    public boolean existsByNameOrNumberExcludingId(String name, Integer number, String excludeId) {
+        String sql = """
+            SELECT 1 FROM collectivities
+            WHERE (name = ? OR number = ?)
+              AND id <> ?
+        """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, name);
-            ps.setString(2, number);
+            ps.setInt(2, number);
+            ps.setString(3, excludeId);
             ResultSet rs = ps.executeQuery();
             return rs.next();
         } catch (SQLException e) {
@@ -78,26 +114,36 @@ public class CollectivityRepository {
         }
     }
 
-    public Collectivity assignIdentity(String id, String name, String number) {
+    public Collectivity updateInformations(String id, String name, Integer number) {
         String sql = "UPDATE collectivities SET name = ?, number = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, name);
-            ps.setString(2, number);
+            ps.setInt(2, number);
             ps.setString(3, id);
             ps.executeUpdate();
-            return findById(id);
+            return findByIdWithStructure(id);
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to assign identity to collectivity id=" + id, e);
+            throw new RuntimeException("Failed to update informations for collectivity id=" + id, e);
         }
     }
-
     private Collectivity mapRow(ResultSet rs) throws SQLException {
         Collectivity c = new Collectivity();
         c.id                 = rs.getString("id");
         c.name               = rs.getString("name");
-        c.number             = rs.getString("number");
+        int num              = rs.getInt("number");
+        c.number             = rs.wasNull() ? null : num;
         c.location           = rs.getString("location");
         c.federationApproval = rs.getBoolean("federation_approval");
         return c;
+    }
+
+    private Member mapStructureMember(ResultSet rs, String prefix) throws SQLException {
+        String id = rs.getString(prefix + "_id");
+        if (id == null) return null;
+        Member m = new Member();
+        m.id        = id;
+        m.firstName = rs.getString(prefix + "_fn");
+        m.lastName  = rs.getString(prefix + "_ln");
+        return m;
     }
 }

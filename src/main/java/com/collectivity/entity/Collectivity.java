@@ -15,7 +15,7 @@ import java.util.List;
 public class Collectivity {
     public String       id;
     public String       name;
-    public String       number;
+    public Integer      number;
     public String       location;
     public boolean      federationApproval;
     public Member       president;

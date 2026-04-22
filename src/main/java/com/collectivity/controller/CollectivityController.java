@@ -1,6 +1,6 @@
 package com.collectivity.controller;
 
-import com.collectivity.dto.request.AssignIdentityRequest;
+import com.collectivity.dto.request.CollectivityInformationRequest;
 import com.collectivity.dto.request.CreateCollectivityRequest;
 import com.collectivity.dto.response.CollectivityResponse;
 import com.collectivity.service.CollectivityService;
@@ -19,17 +19,18 @@ public class CollectivityController {
     public CollectivityController(CollectivityService collectivityService) {
         this.collectivityService = collectivityService;
     }
-
     @PostMapping
     public ResponseEntity<List<CollectivityResponse>> create(
             @RequestBody List<CreateCollectivityRequest> requests) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(collectivityService.createAll(requests));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(collectivityService.createAll(requests));
     }
 
-    @PutMapping("/{id}/identity")
-    public ResponseEntity<CollectivityResponse> assignIdentity(
+    @PutMapping("/{id}/informations")
+    public ResponseEntity<CollectivityResponse> updateInformations(
             @PathVariable String id,
-            @RequestBody AssignIdentityRequest request) {
-        return ResponseEntity.ok(collectivityService.assignIdentity(id, request));
+            @RequestBody CollectivityInformationRequest request) {
+        return ResponseEntity.ok(collectivityService.updateInformations(id, request));
     }
 }

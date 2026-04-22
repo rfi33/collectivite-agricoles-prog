@@ -1,13 +1,12 @@
 package com.collectivity.service;
 
-import com.collectivity.dto.request.AssignIdentityRequest;
+import com.collectivity.dto.request.CollectivityInformationRequest;
 import com.collectivity.dto.request.CreateCollectivityRequest;
 import com.collectivity.dto.response.CollectivityResponse;
 import com.collectivity.dto.response.CollectivityStructureResponse;
 import com.collectivity.entity.Collectivity;
 import com.collectivity.entity.Member;
 import com.collectivity.exception.BadRequestException;
-import com.collectivity.exception.ForbiddenException;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
 import com.collectivity.repository.MemberRepository;
@@ -39,38 +38,26 @@ public class CollectivityService {
         return responses;
     }
 
-    public CollectivityResponse assignIdentity(String id, AssignIdentityRequest request) {
-        Collectivity collectivity = collectivityRepository.findById(id);
-        if (collectivity == null) {
-            throw new NotFoundException("Collectivity not found: " + id);
-        }
-        if (collectivity.name != null || collectivity.number != null) {
-            throw new ForbiddenException("Identity already assigned and cannot be changed.");
-        }
-        if (collectivityRepository.existsByNameOrNumber(request.name, request.number)) {
-            throw new BadRequestException("Name or number already exists.");
-        }
-        Collectivity updated = collectivityRepository.assignIdentity(id, request.name, request.number);
-        return toResponse(updated);
-    }
-
     private CollectivityResponse create(CreateCollectivityRequest request) {
         if (request.federationApproval == null || !request.federationApproval) {
             throw new BadRequestException("Federation approval is required to open a collectivity.");
         }
+
+        // 400 — structure complete obligatoire
         if (request.structure == null
-                || request.structure.president    == null
+                || request.structure.president     == null
                 || request.structure.vicePresident == null
-                || request.structure.treasurer    == null
-                || request.structure.secretary    == null) {
-            throw new BadRequestException("Collectivity structure is required.");
+                || request.structure.treasurer     == null
+                || request.structure.secretary     == null) {
+            throw new BadRequestException("Collectivity structure is required (president, vicePresident, treasurer, secretary).");
         }
         if (request.members == null || request.members.size() < 10) {
             throw new BadRequestException("At least 10 members are required.");
         }
         int seniorCount = memberRepository.countMembersWithSixMonthsSeniority(request.members);
         if (seniorCount < 5) {
-            throw new BadRequestException("At least 5 members must have seniority >= 6 months. Found: " + seniorCount);
+            throw new BadRequestException(
+                    "At least 5 members must have seniority >= 6 months. Found: " + seniorCount);
         }
         Member president     = findMemberOrThrow(request.structure.president);
         Member vicePresident = findMemberOrThrow(request.structure.vicePresident);
@@ -92,6 +79,22 @@ public class CollectivityService {
         Collectivity saved = collectivityRepository.save(collectivity);
         collectivityRepository.saveMembers(saved.id, request.members);
         return toResponse(saved);
+    }
+
+    public CollectivityResponse updateInformations(String id, CollectivityInformationRequest request) {
+        Collectivity existing = collectivityRepository.findById(id);
+        if (existing == null) {
+            throw new NotFoundException("Collectivity not found: " + id);
+        }
+
+        if (collectivityRepository.existsByNameOrNumberExcludingId(request.name, request.number, id)) {
+            throw new BadRequestException("Name or number already used by another collectivity.");
+        }
+        Collectivity updated = collectivityRepository.updateInformations(id, request.name, request.number);
+
+        updated.members = memberRepository.findByCollectivityId(updated.id);
+
+        return toResponse(updated);
     }
 
     private Member findMemberOrThrow(String memberId) {

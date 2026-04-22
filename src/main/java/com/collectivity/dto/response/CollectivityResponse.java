@@ -5,8 +5,9 @@ import java.util.List;
 public class CollectivityResponse {
     public String                        id;
     public String                        name;
-    public String                        number;
+    public Integer                       number;   // integer dans la spec, pas String
     public String                        location;
     public CollectivityStructureResponse structure;
     public List<MemberResponse>          members;
 }
+
