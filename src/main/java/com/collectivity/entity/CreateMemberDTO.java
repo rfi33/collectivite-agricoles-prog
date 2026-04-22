@@ -1,21 +1,32 @@
 package com.collectivity.entity;
+
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.util.List;
 
+@Setter
+@Getter
 public class CreateMemberDTO {
-    public String firstName;
-    public String lastName;
-    public LocalDate birthDate;
-    public Gender gender;
-    public String address;
-    public String profession;
-    public String phoneNumber;
-    public String email;
-    public MemberOccupation occupation;
 
-    public Long collectivityIdentifier;
-    public List<String> referees;
+    // MemberInformation fields
+    private String firstName;
+    private String lastName;
+    private LocalDate birthDate;
+    private Gender gender;
+    private String address;
+    private String profession;
+    private String phoneNumber;
+    private String email;
+    private MemberOccupation occupation;
 
-    public boolean registrationFeePaid;
-    public boolean membershipDuesPaid;
+    // CreateMember-specific fields
+    private String collectivityIdentifier;  // ID of the target collectivity
+    private List<String> referees;          // List<MemberIdentifier>
+    private Boolean registrationFeePaid;
+    private Boolean membershipDuesPaid;
+
+    public CreateMemberDTO() {}
+
 }
