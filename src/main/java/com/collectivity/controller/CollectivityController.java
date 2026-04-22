@@ -2,6 +2,7 @@ package com.collectivity.controller;
 
 import com.collectivity.dto.request.CollectivityInformationRequest;
 import com.collectivity.dto.request.CreateCollectivityRequest;
+import com.collectivity.dto.request.CreateMembershipFeeRequest;
 import com.collectivity.dto.response.CollectivityResponse;
 import com.collectivity.dto.response.MembershipFeeResponse;
 import com.collectivity.service.CollectivityService;
@@ -16,8 +17,8 @@ import java.util.List;
 @RequestMapping("/collectivities")
 public class CollectivityController {
 
-    private final CollectivityService   collectivityService;
-    private final MembershipFeeService  membershipFeeService;
+    private final CollectivityService  collectivityService;
+    private final MembershipFeeService membershipFeeService;
     public CollectivityController(CollectivityService collectivityService,
                                   MembershipFeeService membershipFeeService) {
         this.collectivityService  = collectivityService;
@@ -36,9 +37,17 @@ public class CollectivityController {
             @RequestBody CollectivityInformationRequest request) {
         return ResponseEntity.ok(collectivityService.updateInformations(id, request));
     }
+
     @GetMapping("/{id}/membershipFees")
     public ResponseEntity<List<MembershipFeeResponse>> getMembershipFees(
             @PathVariable String id) {
         return ResponseEntity.ok(membershipFeeService.findByCollectivityId(id));
+    }
+
+    @PostMapping("/{id}/membershipFees")
+    public ResponseEntity<List<MembershipFeeResponse>> createMembershipFees(
+            @PathVariable String id,
+            @RequestBody List<CreateMembershipFeeRequest> requests) {
+        return ResponseEntity.ok(membershipFeeService.createAll(id, requests));
     }
 }
