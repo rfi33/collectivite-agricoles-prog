@@ -4,14 +4,18 @@ import com.collectivity.dto.request.CollectivityInformationRequest;
 import com.collectivity.dto.request.CreateCollectivityRequest;
 import com.collectivity.dto.response.CollectivityResponse;
 import com.collectivity.dto.response.CollectivityStructureResponse;
+import com.collectivity.dto.response.CollectivityTransactionResponse;
 import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.CollectivityTransaction;
 import com.collectivity.entity.Member;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
 import com.collectivity.repository.MemberRepository;
+import com.collectivity.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,13 +25,15 @@ public class CollectivityService {
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository       memberRepository;
     private final MemberService          memberService;
+    private final TransactionRepository transactionRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
                                MemberRepository memberRepository,
-                               MemberService memberService) {
+                               MemberService memberService, TransactionRepository transactionRepository) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository       = memberRepository;
         this.memberService          = memberService;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<CollectivityResponse> createAll(List<CreateCollectivityRequest> requests) {
@@ -42,8 +48,6 @@ public class CollectivityService {
         if (request.federationApproval == null || !request.federationApproval) {
             throw new BadRequestException("Federation approval is required to open a collectivity.");
         }
-
-        // 400 — structure complete obligatoire
         if (request.structure == null
                 || request.structure.president     == null
                 || request.structure.vicePresident == null
@@ -123,5 +127,23 @@ public class CollectivityService {
             response.members = c.members.stream().map(memberService::toResponse).toList();
         }
         return response;
+    }
+    public List<CollectivityTransactionResponse> getTransactions(String id, LocalDate from, LocalDate to) {
+        if (collectivityRepository.findById(id) == null) {
+            throw new NotFoundException("Collectivity not found: " + id);
+        }
+
+        List<CollectivityTransaction> transactions = transactionRepository.findByPeriod(id, from, to);
+
+        return transactions.stream().map(tx -> {
+            CollectivityTransactionResponse res = new CollectivityTransactionResponse();
+            res.setId(tx.getId());
+            res.setCreationDate(tx.getCreationDate());
+            res.setAmount(tx.getAmount());
+            res.setMemberId(tx.getMemberId());
+            res.setAccountCreditedId(tx.getAccountCreditedId());
+            res.setPaymentMode(tx.getPaymentMode());
+            return res;
+        }).toList();
     }
 }

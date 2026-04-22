@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public class MembershipFeeRepository {
+public class  MembershipFeeRepository {
 
     private final Connection connection;
 
