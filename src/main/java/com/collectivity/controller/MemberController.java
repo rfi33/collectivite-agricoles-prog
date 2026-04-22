@@ -17,11 +17,9 @@ import java.util.List;
 public class MemberController {
 
     private final MemberService memberService;
-
     public MemberController(MemberService memberService) {
         this.memberService = memberService;
     }
-
     @PostMapping
     public ResponseEntity<List<MemberResponse>> create(@RequestBody List<CreateMemberRequest> requests) {
         List<MemberResponse> responses = memberService.createAll(requests);

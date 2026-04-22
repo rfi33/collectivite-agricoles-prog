@@ -21,10 +21,13 @@ public class Member {
     public String phoneNumber;
     public String email;
     public MemberOccupation occupation;
+
     public Long collectivityId;
+
     public boolean registrationFeePaid;
     public boolean membershipDuesPaid;
-    public List<Member> referees;
 
-    public Member() {}
+    public Member() {
+
+    }
 }
