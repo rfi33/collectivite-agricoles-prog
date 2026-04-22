@@ -1,7 +1,7 @@
 package com.collectivity.dto.response;
 
-import com.collectivity.entity.Frequency;
 import com.collectivity.entity.ActivityStatus;
+import com.collectivity.entity.Frequency;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,5 +12,5 @@ public class MembershipFeeResponse {
     public Frequency      frequency;
     public BigDecimal     amount;
     public String         label;
-    public ActivityStatus activityStatus;
+    public ActivityStatus status;
 }

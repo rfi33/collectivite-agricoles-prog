@@ -54,7 +54,7 @@ public class TransactionRepository {
                 ));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de la lecture des transactions", e);
+            throw new RuntimeException("Transaction error", e);
         }
         return transactions;
     }

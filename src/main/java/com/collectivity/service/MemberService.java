@@ -3,6 +3,7 @@ package com.collectivity.service;
 import com.collectivity.dto.request.CreateMemberPaymentRequest;
 import com.collectivity.dto.request.CreateMemberRequest;
 import com.collectivity.dto.request.RefereeInfoRequest;
+import com.collectivity.dto.response.MemberPaymentResponse;
 import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.entity.CollectivityTransaction;
 import com.collectivity.entity.Member;
@@ -15,14 +16,16 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MemberService {
 
-    private final MemberRepository memberRepository;
-
-    public MemberService(MemberRepository memberRepository, TransactionRepository transactionRepository) {
-        this.memberRepository = memberRepository;
+    private final MemberRepository      memberRepository;
+    private final TransactionRepository transactionRepository;
+    public MemberService(MemberRepository memberRepository,
+                         TransactionRepository transactionRepository) {
+        this.memberRepository      = memberRepository;
         this.transactionRepository = transactionRepository;
     }
 
@@ -35,7 +38,6 @@ public class MemberService {
     }
 
     private MemberResponse create(CreateMemberRequest request) {
-
         if (request.collectivityIdentifier == null) {
             throw new BadRequestException("Collectivity identifier is required.");
         }
@@ -102,6 +104,40 @@ public class MemberService {
         return toResponse(saved);
     }
 
+    public List<MemberPaymentResponse> createPayments(String memberId,
+                                                      List<CreateMemberPaymentRequest> requests) {
+        Member member = memberRepository.findById(memberId);
+        if (member == null) {
+            throw new NotFoundException("Member not found: " + memberId);
+        }
+
+        List<MemberPaymentResponse> responses = new ArrayList<>();
+        for (CreateMemberPaymentRequest request : requests) {
+            responses.add(createPayment(member, request));
+        }
+        return responses;
+    }
+
+    private MemberPaymentResponse createPayment(Member member, CreateMemberPaymentRequest request) {
+        CollectivityTransaction transaction = new CollectivityTransaction();
+        transaction.setId(UUID.randomUUID().toString());
+        transaction.setAmount(request.getAmount());
+        transaction.setCreationDate(LocalDate.now());
+        transaction.setMemberId(member.id);
+        transaction.setCollectivityId(member.collectivityId);
+        transaction.setAccountCreditedId(request.getAccountCreditedIdentifier());
+        transaction.setPaymentMode(request.getPaymentMode());
+
+        transactionRepository.save(transaction);
+        MemberPaymentResponse response = new MemberPaymentResponse();
+        response.id               = transaction.getId();
+        response.amount           = request.getAmount();
+        response.paymentMode      = request.getPaymentMode();
+        response.accountCreditedId = request.getAccountCreditedIdentifier();
+        response.creationDate     = transaction.getCreationDate();
+        return response;
+    }
+
     public MemberResponse toResponse(Member m) {
         MemberResponse response = new MemberResponse();
         response.id          = m.id;
@@ -118,24 +154,5 @@ public class MemberService {
             response.referees = m.referees.stream().map(this::toResponse).toList();
         }
         return response;
-    }
-
-    private final TransactionRepository transactionRepository;
-
-    public void createPayment(String memberId, CreateMemberPaymentRequest request) {
-        Member member = memberRepository.findById(memberId);
-        if (member == null) {
-            throw new NotFoundException("Membre non trouvé avec l'ID : " + memberId);
-        }
-
-        CollectivityTransaction transaction = new CollectivityTransaction();
-        transaction.setAmount(request.getAmount());
-        transaction.setCreationDate(LocalDate.now());
-        transaction.setMemberId(memberId);
-        transaction.setCollectivityId(member.getCollectivityId());
-        transaction.setAccountCreditedId(request.getAccountCreditedIdentifier());
-        transaction.setPaymentMode(request.getPaymentMode());
-
-        transactionRepository.save(transaction);
     }
 }

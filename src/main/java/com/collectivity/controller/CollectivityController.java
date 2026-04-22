@@ -52,6 +52,12 @@ public class CollectivityController {
             @PathVariable String id,
             @RequestBody List<CreateMembershipFeeRequest> requests) {
         return ResponseEntity.ok(membershipFeeService.createAll(id, requests));
-
+    }
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<CollectivityTransactionResponse>> getTransactions(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(collectivityService.getTransactions(id, from, to));
     }
 }

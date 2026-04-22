@@ -2,6 +2,7 @@ package com.collectivity.controller;
 
 import com.collectivity.dto.request.CreateMemberPaymentRequest;
 import com.collectivity.dto.request.CreateMemberRequest;
+import com.collectivity.dto.response.MemberPaymentResponse;
 import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.service.MemberService;
 import org.springframework.http.HttpStatus;
@@ -21,16 +22,18 @@ public class MemberController {
     }
 
     @PostMapping
-    public ResponseEntity<List<MemberResponse>> create(@RequestBody List<CreateMemberRequest> requests) {
-        List<MemberResponse> responses = memberService.createAll(requests);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    public ResponseEntity<List<MemberResponse>> create(
+            @RequestBody List<CreateMemberRequest> requests) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(memberService.createAll(requests));
     }
     @PostMapping("/{id}/payments")
-    public ResponseEntity<Void> addPayment(
+    public ResponseEntity<List<MemberPaymentResponse>> createPayments(
             @PathVariable String id,
-            @RequestBody CreateMemberPaymentRequest request) {
-
-        memberService.createPayment(id, request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+            @RequestBody List<CreateMemberPaymentRequest> requests) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(memberService.createPayments(id, requests));
     }
 }

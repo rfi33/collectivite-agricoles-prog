@@ -25,15 +25,16 @@ public class CollectivityService {
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository       memberRepository;
     private final MemberService          memberService;
-    private final TransactionRepository transactionRepository;
+    private final TransactionRepository  transactionRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
                                MemberRepository memberRepository,
-                               MemberService memberService, TransactionRepository transactionRepository) {
+                               MemberService memberService,
+                               TransactionRepository transactionRepository) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository       = memberRepository;
         this.memberService          = memberService;
-        this.transactionRepository = transactionRepository;
+        this.transactionRepository  = transactionRepository;
     }
 
     public List<CollectivityResponse> createAll(List<CreateCollectivityRequest> requests) {
@@ -90,15 +91,39 @@ public class CollectivityService {
         if (existing == null) {
             throw new NotFoundException("Collectivity not found: " + id);
         }
-
         if (collectivityRepository.existsByNameOrNumberExcludingId(request.name, request.number, id)) {
             throw new BadRequestException("Name or number already used by another collectivity.");
         }
         Collectivity updated = collectivityRepository.updateInformations(id, request.name, request.number);
-
         updated.members = memberRepository.findByCollectivityId(updated.id);
-
         return toResponse(updated);
+    }
+
+    public List<CollectivityTransactionResponse> getTransactions(String id,
+                                                                 LocalDate from,
+                                                                 LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new BadRequestException("'from' date must be before or equal to 'to' date.");
+        }
+
+        if (collectivityRepository.findById(id) == null) {
+            throw new NotFoundException("Collectivity not found: " + id);
+        }
+
+        List<CollectivityTransaction> transactions = transactionRepository.findByPeriod(id, from, to);
+
+        return transactions.stream().map(tx -> {
+            CollectivityTransactionResponse res = new CollectivityTransactionResponse();
+            res.id               = tx.getId();
+            res.creationDate     = tx.getCreationDate();
+            res.amount           = tx.getAmount();
+            res.paymentMode      = tx.getPaymentMode();
+            res.accountCreditedId = tx.getAccountCreditedId();
+            Member member = memberRepository.findById(tx.getMemberId());
+            res.memberDebited = member != null ? memberService.toResponse(member) : null;
+
+            return res;
+        }).toList();
     }
 
     private Member findMemberOrThrow(String memberId) {
@@ -127,23 +152,5 @@ public class CollectivityService {
             response.members = c.members.stream().map(memberService::toResponse).toList();
         }
         return response;
-    }
-    public List<CollectivityTransactionResponse> getTransactions(String id, LocalDate from, LocalDate to) {
-        if (collectivityRepository.findById(id) == null) {
-            throw new NotFoundException("Collectivity not found: " + id);
-        }
-
-        List<CollectivityTransaction> transactions = transactionRepository.findByPeriod(id, from, to);
-
-        return transactions.stream().map(tx -> {
-            CollectivityTransactionResponse res = new CollectivityTransactionResponse();
-            res.setId(tx.getId());
-            res.setCreationDate(tx.getCreationDate());
-            res.setAmount(tx.getAmount());
-            res.setMemberId(tx.getMemberId());
-            res.setAccountCreditedId(tx.getAccountCreditedId());
-            res.setPaymentMode(tx.getPaymentMode());
-            return res;
-        }).toList();
     }
 }
