@@ -18,6 +18,7 @@ CREATE TABLE collectivities (
                                 treasurer_id        VARCHAR(36),
                                 secretary_id        VARCHAR(36)
 );
+
 CREATE TABLE members (
                          id                    VARCHAR(36)       PRIMARY KEY,
                          first_name            VARCHAR(100)      NOT NULL,
@@ -58,47 +59,51 @@ CREATE TABLE member_referees (
                                  PRIMARY KEY (member_id, referee_id),
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
 );
+
+-- Correction : number en INTEGER (et non VARCHAR)
 ALTER TABLE collectivities
     ADD COLUMN name   VARCHAR(255) UNIQUE,
-    ADD COLUMN number VARCHAR(100) UNIQUE;
-
+    ADD COLUMN number INTEGER      UNIQUE;
 
 CREATE TYPE frequency AS ENUM (
     'WEEKLY',
     'MONTHLY',
     'ANNUALLY',
     'PUNCTUALLY'
-    );
+);
 
 CREATE TYPE activity_status AS ENUM (
     'ACTIVE',
     'INACTIVE'
-    );
+);
 
 CREATE TABLE membership_fees (
-                                 id               VARCHAR(50)     PRIMARY KEY,
-                                 collectivity_id  VARCHAR(50)     NOT NULL REFERENCES collectivities(id),
-                                 eligible_from    DATE            NOT NULL,
-                                 frequency        frequency       NOT NULL,
-                                 amount           NUMERIC(15, 2)  NOT NULL CHECK (amount >= 0),
-                                 label            VARCHAR(255),
-                                 status           activity_status NOT NULL DEFAULT 'ACTIVE'
+                                 id              VARCHAR(50)     PRIMARY KEY,
+                                 collectivity_id VARCHAR(50)     NOT NULL REFERENCES collectivities(id),
+                                 eligible_from   DATE            NOT NULL,
+                                 frequency       frequency       NOT NULL,
+                                 amount          NUMERIC(15, 2)  NOT NULL CHECK (amount >= 0),
+                                 label           VARCHAR(255),
+                                 status          activity_status NOT NULL DEFAULT 'ACTIVE'
 );
+
 CREATE TABLE collectivities_transactions (
-                                             id VARCHAR(50) PRIMARY KEY,
-                                             creation_date DATE NOT NULL,
-                                             amount DECIMAL(15, 2) NOT NULL,
-                                             collectivity_id VARCHAR(50) NOT NULL,
-                                             member_id VARCHAR(50) NOT NULL,
-                                             account_credited_id VARCHAR(50) NOT NULL,
-                                             payment_mode VARCHAR(20) NOT NULL
+                                             id                  VARCHAR(50)    PRIMARY KEY,
+                                             creation_date       DATE           NOT NULL,
+                                             amount              DECIMAL(15, 2) NOT NULL,
+                                             collectivity_id     VARCHAR(50)    NOT NULL,
+                                             member_id           VARCHAR(50)    NOT NULL,
+                                             account_credited_id VARCHAR(50)    NOT NULL,
+                                             payment_mode        VARCHAR(20)    NOT NULL
 );
+
 CREATE TYPE account_type AS ENUM (
     'CASH',
     'MOBILE_BANKING',
     'BANK'
 );
 
+-- Correction : renommé en mobile_money (cohérent avec le reste)
 CREATE TYPE mobile_money AS ENUM (
     'AIRTEL_MONEY',
     'MVOLA',
@@ -118,18 +123,18 @@ CREATE TYPE bank_name AS ENUM (
 );
 
 CREATE TABLE financial_accounts (
-                                    id                     VARCHAR(50)            PRIMARY KEY,
-                                    collectivity_id        VARCHAR(50)            NOT NULL REFERENCES collectivities(id),
-                                    account_type           account_type           NOT NULL,
-                                    amount                 NUMERIC(15, 2)         NOT NULL DEFAULT 0,
-                                    holder_name            VARCHAR(255),
-                                    bank_name              bank_name,
-                                    bank_code              INTEGER,
-                                    bank_branch_code       INTEGER,
-                                    bank_account_number    BIGINT,
-                                    bank_account_key       INTEGER,
-                                    mobile_money mobile_money,
-                                    mobile_number          BIGINT
+                                    id                  VARCHAR(50)    PRIMARY KEY,
+                                    collectivity_id     VARCHAR(50)    NOT NULL REFERENCES collectivities(id),
+                                    account_type        account_type   NOT NULL,
+                                    amount              NUMERIC(15, 2) NOT NULL DEFAULT 0,
+                                    holder_name         VARCHAR(255),
+                                    bank_name           bank_name,
+                                    bank_code           INTEGER,
+                                    bank_branch_code    INTEGER,
+                                    bank_account_number BIGINT,
+                                    bank_account_key    INTEGER,
+                                    mobile_money        mobile_money,
+                                    mobile_number       BIGINT
 );
 
 CREATE UNIQUE INDEX idx_one_cash_per_collectivity
