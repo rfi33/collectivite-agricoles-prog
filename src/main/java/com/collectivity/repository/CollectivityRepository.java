@@ -105,7 +105,7 @@ public class CollectivityRepository {
         """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, name);
-            ps.setInt(2, number);
+            ps.setObject(2, number, Types.INTEGER);
             ps.setString(3, excludeId);
             ResultSet rs = ps.executeQuery();
             return rs.next();
@@ -118,7 +118,7 @@ public class CollectivityRepository {
         String sql = "UPDATE collectivities SET name = ?, number = ? WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, name);
-            ps.setInt(2, number);
+            ps.setObject(2, number, Types.INTEGER);
             ps.setString(3, id);
             ps.executeUpdate();
             return findByIdWithStructure(id);
@@ -126,6 +126,7 @@ public class CollectivityRepository {
             throw new RuntimeException("Failed to update informations for collectivity id=" + id, e);
         }
     }
+
     private Collectivity mapRow(ResultSet rs) throws SQLException {
         Collectivity c = new Collectivity();
         c.id                 = rs.getString("id");

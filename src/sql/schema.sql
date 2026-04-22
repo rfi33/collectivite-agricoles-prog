@@ -60,7 +60,7 @@ CREATE TABLE member_referees (
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
 );
 
--- Correction : number en INTEGER (et non VARCHAR)
+-- Correction : number en INTEGER (était VARCHAR dans la version originale)
 ALTER TABLE collectivities
     ADD COLUMN name   VARCHAR(255) UNIQUE,
     ADD COLUMN number INTEGER      UNIQUE;
@@ -103,7 +103,7 @@ CREATE TYPE account_type AS ENUM (
     'BANK'
 );
 
--- Correction : renommé en mobile_money (cohérent avec le reste)
+-- Correction : type renommé mobile_money (cohérent avec la colonne et le code Java)
 CREATE TYPE mobile_money AS ENUM (
     'AIRTEL_MONEY',
     'MVOLA',

@@ -26,7 +26,7 @@ public class FinancialAccountRepository {
                 id, collectivity_id, account_type, amount,
                 holder_name, bank_name, bank_code, bank_branch_code,
                 bank_account_number, bank_account_key,
-                mobile_banking_service, mobile_number
+                mobile_money, mobile_number
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
         """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -89,11 +89,11 @@ public class FinancialAccountRepository {
 
     private FinancialAccount mapRow(ResultSet rs) throws SQLException {
         FinancialAccount a = new FinancialAccount();
-        a.id              = rs.getString("id");
-        a.collectivityId  = rs.getString("collectivity_id");
-        a.accountType     = AccountType.valueOf(rs.getString("account_type"));
-        a.amount          = rs.getBigDecimal("amount");
-        a.holderName      = rs.getString("holder_name");
+        a.id             = rs.getString("id");
+        a.collectivityId = rs.getString("collectivity_id");
+        a.accountType    = AccountType.valueOf(rs.getString("account_type"));
+        a.amount         = rs.getBigDecimal("amount");
+        a.holderName     = rs.getString("holder_name");
 
         String bank = rs.getString("bank_name");
         a.bankName = bank != null ? Bank.valueOf(bank) : null;
@@ -109,8 +109,7 @@ public class FinancialAccountRepository {
 
         int accountKey = rs.getInt("bank_account_key");
         a.bankAccountKey = rs.wasNull() ? null : accountKey;
-
-        String mbs = rs.getString("mobile_banking_service");
+        String mbs = rs.getString("mobile_money");
         a.mobileMoney = mbs != null ? MobileMoney.valueOf(mbs) : null;
 
         long mobileNumber = rs.getLong("mobile_number");
