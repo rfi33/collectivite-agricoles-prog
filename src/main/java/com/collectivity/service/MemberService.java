@@ -1,14 +1,18 @@
 package com.collectivity.service;
 
+import com.collectivity.dto.request.CreateMemberPaymentRequest;
 import com.collectivity.dto.request.CreateMemberRequest;
 import com.collectivity.dto.request.RefereeInfoRequest;
 import com.collectivity.dto.response.MemberResponse;
+import com.collectivity.entity.CollectivityTransaction;
 import com.collectivity.entity.Member;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.MemberRepository;
+import com.collectivity.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,8 +21,9 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, TransactionRepository transactionRepository) {
         this.memberRepository = memberRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<MemberResponse> createAll(List<CreateMemberRequest> requests) {
@@ -113,5 +118,24 @@ public class MemberService {
             response.referees = m.referees.stream().map(this::toResponse).toList();
         }
         return response;
+    }
+
+    private final TransactionRepository transactionRepository;
+
+    public void createPayment(String memberId, CreateMemberPaymentRequest request) {
+        Member member = memberRepository.findById(memberId);
+        if (member == null) {
+            throw new NotFoundException("Membre non trouvé avec l'ID : " + memberId);
+        }
+
+        CollectivityTransaction transaction = new CollectivityTransaction();
+        transaction.setAmount(request.getAmount());
+        transaction.setCreationDate(LocalDate.now());
+        transaction.setMemberId(memberId);
+        transaction.setCollectivityId(member.getCollectivityId());
+        transaction.setAccountCreditedId(request.getAccountCreditedIdentifier());
+        transaction.setPaymentMode(request.getPaymentMode());
+
+        transactionRepository.save(transaction);
     }
 }
