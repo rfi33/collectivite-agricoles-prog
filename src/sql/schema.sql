@@ -10,7 +10,7 @@ CREATE TYPE member_occupation AS ENUM (
 );
 
 CREATE TABLE collectivities (
-                                id                  VARCHAR(36)  PRIMARY KEY,
+                                id                  VARCHAR(50)  PRIMARY KEY,
                                 location            VARCHAR(255) NOT NULL,
                                 federation_approval BOOLEAN      NOT NULL DEFAULT FALSE,
                                 president_id        VARCHAR(36),
@@ -19,7 +19,7 @@ CREATE TABLE collectivities (
                                 secretary_id        VARCHAR(36)
 );
 CREATE TABLE members (
-                         id                    VARCHAR(36)       PRIMARY KEY,
+                         id                    VARCHAR(50)       PRIMARY KEY,
                          first_name            VARCHAR(100)      NOT NULL,
                          last_name             VARCHAR(100)      NOT NULL,
                          birth_date            DATE              NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE members (
                          phone_number          VARCHAR(20)       NOT NULL,
                          email                 VARCHAR(150)      NOT NULL,
                          occupation            member_occupation NOT NULL DEFAULT 'JUNIOR',
-                         collectivity_id       VARCHAR(36)       REFERENCES collectivities(id),
+                         collectivity_id       VARCHAR(50)       REFERENCES collectivities(id),
                          join_date             DATE              NOT NULL DEFAULT CURRENT_DATE,
                          registration_fee_paid BOOLEAN           NOT NULL DEFAULT FALSE,
                          membership_dues_paid  BOOLEAN           NOT NULL DEFAULT FALSE
@@ -46,14 +46,14 @@ ALTER TABLE collectivities
         FOREIGN KEY (secretary_id)      REFERENCES members(id);
 
 CREATE TABLE collectivity_members (
-                                      collectivity_id VARCHAR(36) NOT NULL REFERENCES collectivities(id),
-                                      member_id       VARCHAR(36) NOT NULL REFERENCES members(id),
+                                      collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivities(id),
+                                      member_id       VARCHAR(50) NOT NULL REFERENCES members(id),
                                       PRIMARY KEY (collectivity_id, member_id)
 );
 
 CREATE TABLE member_referees (
-                                 member_id  VARCHAR(36)  NOT NULL REFERENCES members(id),
-                                 referee_id VARCHAR(36)  NOT NULL REFERENCES members(id),
+                                 member_id  VARCHAR(50)  NOT NULL REFERENCES members(id),
+                                 referee_id VARCHAR(50)  NOT NULL REFERENCES members(id),
                                  relation   VARCHAR(100) NOT NULL,
                                  PRIMARY KEY (member_id, referee_id),
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
@@ -61,3 +61,26 @@ CREATE TABLE member_referees (
 ALTER TABLE collectivities
     ADD COLUMN name   VARCHAR(255) UNIQUE,
     ADD COLUMN number VARCHAR(100) UNIQUE;
+
+
+CREATE TYPE frequency AS ENUM (
+    'WEEKLY',
+    'MONTHLY',
+    'ANNUALLY',
+    'PUNCTUALLY'
+);
+
+CREATE TYPE activity_status AS ENUM (
+    'ACTIVE',
+    'INACTIVE'
+);
+
+CREATE TABLE membership_fees (
+                                 id               VARCHAR(50)     PRIMARY KEY,
+                                 collectivity_id  VARCHAR(50)     NOT NULL REFERENCES collectivities(id),
+                                 eligible_from    DATE            NOT NULL,
+                                 frequency        frequency       NOT NULL,
+                                 amount           NUMERIC(15, 2)  NOT NULL CHECK (amount >= 0),
+                                 label            VARCHAR(255),
+                                 status           activity_status NOT NULL DEFAULT 'ACTIVE'
+);
