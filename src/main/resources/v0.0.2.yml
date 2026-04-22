@@ -181,10 +181,8 @@ components:
           type: string
         name:
           type: string
-          nullable: true
         number:
           type: string
-          nullable: true
         location:
           type: string
         structure:
