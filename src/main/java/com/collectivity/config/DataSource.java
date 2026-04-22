@@ -11,7 +11,7 @@ import java.sql.SQLException;
 @Configuration
 public class DataSource {
 
-    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    private static final Dotenv dotenv = Dotenv.load();
 
     private final String jdbcUrl  = dotenv.get("JDBC_URL");
     private final String user     = dotenv.get("DB_USER");
