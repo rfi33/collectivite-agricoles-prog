@@ -59,3 +59,152 @@ INSERT INTO member_referees (member_id, referee_id, relation) VALUES
                                                                   ('mem-021', 'mem-019', 'Soeur'),
                                                                   ('mem-022', 'mem-020', 'Ami de quartier'),
                                                                   ('mem-026', 'mem-023', 'Ancienne eleve');
+INSERT INTO membership_fees (
+    id,
+    collectivity_id,
+    eligible_from,
+    frequency,
+    amount,
+    label,
+    status
+) VALUES
+      ('fee-001', 'col-001', '2021-06-01', 'MONTHLY',     5000.00,  'Monthly membership dues',      'ACTIVE'),
+      ('fee-002', 'col-001', '2021-06-01', 'ANNUALLY',   50000.00,  'Annual membership dues',       'ACTIVE'),
+      ('fee-003', 'col-001', '2022-01-01', 'PUNCTUALLY', 10000.00,  'Special event contribution',   'INACTIVE'),
+      ('fee-004', 'col-002', '2021-03-01', 'MONTHLY',     4000.00,  'Monthly membership dues',      'ACTIVE'),
+      ('fee-005', 'col-002', '2021-03-01', 'ANNUALLY',   40000.00,  'Annual membership dues',       'ACTIVE'),
+      ('fee-006', 'col-002', '2023-06-01', 'PUNCTUALLY',  8000.00,  'Emergency fund contribution',  'ACTIVE');
+
+
+INSERT INTO collectivities_transactions (
+    id,
+    creation_date,
+    amount,
+    collectivity_id,
+    member_id,
+    account_credited_id,
+    payment_mode
+) VALUES
+      ('txn-001', '2024-01-05',  5000.00, 'col-001', 'mem-001', 'account-cash-001',  'CASH'),
+      ('txn-002', '2024-01-06',  5000.00, 'col-001', 'mem-002', 'account-cash-001',  'CASH'),
+      ('txn-003', '2024-01-08',  5000.00, 'col-001', 'mem-003', 'account-mvola-001', 'MOBILE_BANKING'),
+      ('txn-004', '2024-01-10',  5000.00, 'col-001', 'mem-004', 'account-mvola-001', 'MOBILE_BANKING'),
+      ('txn-005', '2024-02-03',  5000.00, 'col-001', 'mem-001', 'account-cash-001',  'CASH'),
+      ('txn-006', '2024-02-05',  5000.00, 'col-001', 'mem-006', 'account-cash-001',  'CASH'),
+      ('txn-007', '2024-02-07',  5000.00, 'col-001', 'mem-008', 'account-bank-001',  'BANK_TRANSFER'),
+      ('txn-008', '2024-02-09',  5000.00, 'col-001', 'mem-009', 'account-bank-001',  'BANK_TRANSFER'),
+      ('txn-009', '2024-03-04',  5000.00, 'col-001', 'mem-002', 'account-cash-001',  'CASH'),
+      ('txn-010', '2024-03-06', 10000.00, 'col-001', 'mem-003', 'account-cash-001',  'CASH'),
+      ('txn-011', '2024-01-07',  4000.00, 'col-002', 'mem-011', 'account-cash-002',  'CASH'),
+      ('txn-012', '2024-01-09',  4000.00, 'col-002', 'mem-012', 'account-cash-002',  'CASH'),
+      ('txn-013', '2024-01-11',  4000.00, 'col-002', 'mem-013', 'account-mvola-002', 'MOBILE_BANKING'),
+      ('txn-014', '2024-01-15',  4000.00, 'col-002', 'mem-015', 'account-mvola-002', 'MOBILE_BANKING'),
+      ('txn-015', '2024-02-04',  4000.00, 'col-002', 'mem-011', 'account-cash-002',  'CASH'),
+      ('txn-016', '2024-02-06',  4000.00, 'col-002', 'mem-017', 'account-bank-002',  'BANK_TRANSFER'),
+      ('txn-017', '2024-03-05',  8000.00, 'col-002', 'mem-012', 'account-cash-002',  'CASH');
+
+
+INSERT INTO financial_accounts (id, collectivity_id, account_type, amount)
+VALUES ('acc-001', 'col-001', 'CASH', 1500000.00);
+
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, bank_name, bank_code, bank_branch_code,
+    bank_account_number, bank_account_key
+) VALUES (
+             'acc-002', 'col-001', 'BANK', 8750000.00,
+             'Collectivité Agri Antananarivo',
+             'BOA', 10005, 00001, 12345678901, 27
+         );
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, mobile_money, mobile_number
+) VALUES (
+             'acc-003', 'col-001', 'MOBILE_BANKING', 320000.00,
+             'Hery Rakotondrazaka',
+             'MVOLA', 341000003
+         );
+
+INSERT INTO financial_accounts (id, collectivity_id, account_type, amount)
+VALUES ('acc-004', 'col-002', 'CASH', 750000.00);
+
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, bank_name, bank_code, bank_branch_code,
+    bank_account_number, bank_account_key
+) VALUES (
+             'acc-005', 'col-002', 'BANK', 4200000.00,
+             'Collectivité Agri Toamasina',
+             'MCB', 10002, 00002, 98765432101, 14
+         );
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, mobile_money, mobile_number
+) VALUES (
+             'acc-006', 'col-002', 'MOBILE_BANKING', 180000.00,
+             'Freddy Rakotondratsima',
+             'AIRTEL_MONEY', 341000013
+         );
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, bank_name, bank_code, bank_branch_code,
+    bank_account_number, bank_account_key
+) VALUES (
+             'acc-007', 'col-002', 'BANK', 1100000.00,
+             'Freddy Rakotondratsima',
+             'BMOI', 10003, 00005, 11122233301, 09
+         );
+INSERT INTO financial_accounts (id, collectivity_id, account_type, amount)
+VALUES ('acc-008', 'col-003', 'CASH', 200000.00);
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, mobile_banking_money, mobile_number
+) VALUES (
+             'acc-009', 'col-003', 'MOBILE_BANKING', 95000.00,
+             'Honorine Rakotondrabe',
+             'ORANGE_MONEY', 341000021
+         );
+
+INSERT INTO financial_accounts (id, collectivity_id, account_type, amount)
+VALUES ('acc-010', 'col-004', 'CASH', 500000.00);
+
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, bank_name, bank_code, bank_branch_code,
+    bank_account_number, bank_account_key
+) VALUES (
+             'acc-011', 'col-004', 'BANK', 3300000.00,
+             'Collectivité Agri Fianarantsoa',
+             'BRED', 10001, 00003, 55566677801, 31
+         );
+INSERT INTO financial_accounts (
+    id, collectivity_id, account_type, amount,
+    holder_name, mobile_money, mobile_number
+) VALUES (
+             'acc-012', 'col-004', 'MOBILE_BANKING', 260000.00,
+             'Volasoa Rakotondratsara',
+             'MVOLA', 341000025
+         );
+INSERT INTO collectivities_transactions (
+    id, creation_date, amount, collectivity_id,
+    member_id, account_credited_id, payment_mode
+) VALUES
+      ('tx-001', '2026-01-15', 50000.00, 'col-001', 'mem-001', 'acc-002', 'BANK_TRANSFER'),
+      ('tx-002', '2026-01-15', 50000.00, 'col-001', 'mem-002', 'acc-002', 'BANK_TRANSFER'),
+      ('tx-003', '2026-01-15', 50000.00, 'col-001', 'mem-003', 'acc-003', 'MOBILE_BANKING'),
+      ('tx-004', '2026-01-15', 50000.00, 'col-001', 'mem-004', 'acc-001', 'CASH'),
+      ('tx-005', '2026-02-10', 50000.00, 'col-001', 'mem-006', 'acc-002', 'BANK_TRANSFER'),
+      ('tx-006', '2026-02-10', 50000.00, 'col-001', 'mem-008', 'acc-003', 'MOBILE_BANKING'),
+      ('tx-007', '2026-02-10', 50000.00, 'col-001', 'mem-009', 'acc-001', 'CASH'),
+      ('tx-008', '2026-03-05', 200000.00, 'col-001', 'mem-001', 'acc-002', 'BANK_TRANSFER'),
+      ('tx-009', '2026-01-20', 50000.00, 'col-002', 'mem-011', 'acc-005', 'BANK_TRANSFER'),
+      ('tx-010', '2026-01-20', 50000.00, 'col-002', 'mem-012', 'acc-005', 'BANK_TRANSFER'),
+      ('tx-011', '2026-01-20', 50000.00, 'col-002', 'mem-013', 'acc-006', 'MOBILE_BANKING'),
+      ('tx-012', '2026-02-18', 50000.00, 'col-002', 'mem-015', 'acc-004', 'CASH'),
+      ('tx-013', '2026-02-18', 50000.00, 'col-002', 'mem-017', 'acc-007', 'BANK_TRANSFER'),
+      ('tx-014', '2026-01-25', 50000.00, 'col-003', 'mem-019', 'acc-008', 'CASH'),
+      ('tx-015', '2026-02-25', 50000.00, 'col-003', 'mem-020', 'acc-009', 'MOBILE_BANKING'),
+      ('tx-016', '2026-01-10', 50000.00, 'col-004', 'mem-023', 'acc-011', 'BANK_TRANSFER'),
+      ('tx-017', '2026-01-10', 50000.00, 'col-004', 'mem-024', 'acc-011', 'BANK_TRANSFER'),
+      ('tx-018', '2026-02-12', 50000.00, 'col-004', 'mem-025', 'acc-012', 'MOBILE_BANKING'),
+      ('tx-019', '2026-03-01', 200000.00, 'col-004', 'mem-023', 'acc-010', 'CASH');

@@ -3,12 +3,15 @@ package com.collectivity.service;
 import com.collectivity.dto.request.CreateMemberPaymentRequest;
 import com.collectivity.dto.request.CreateMemberRequest;
 import com.collectivity.dto.request.RefereeInfoRequest;
+import com.collectivity.dto.response.FinancialAccountResponse;
 import com.collectivity.dto.response.MemberPaymentResponse;
 import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.entity.CollectivityTransaction;
+import com.collectivity.entity.FinancialAccount;
 import com.collectivity.entity.Member;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
+import com.collectivity.repository.FinancialAccountRepository;
 import com.collectivity.repository.MemberRepository;
 import com.collectivity.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
@@ -21,12 +24,16 @@ import java.util.UUID;
 @Service
 public class MemberService {
 
-    private final MemberRepository      memberRepository;
-    private final TransactionRepository transactionRepository;
+    private final MemberRepository           memberRepository;
+    private final TransactionRepository      transactionRepository;
+    private final FinancialAccountRepository financialAccountRepository;
+
     public MemberService(MemberRepository memberRepository,
-                         TransactionRepository transactionRepository) {
-        this.memberRepository      = memberRepository;
-        this.transactionRepository = transactionRepository;
+                         TransactionRepository transactionRepository,
+                         FinancialAccountRepository financialAccountRepository) {
+        this.memberRepository           = memberRepository;
+        this.transactionRepository      = transactionRepository;
+        this.financialAccountRepository = financialAccountRepository;
     }
 
     public List<MemberResponse> createAll(List<CreateMemberRequest> requests) {
@@ -61,8 +68,8 @@ public class MemberService {
             }
             if (!memberRepository.isConfirmedWithSeniority(refereeInfo.memberId)) {
                 throw new BadRequestException(
-                        "Referee " + refereeInfo.memberId + " is not a confirmed member with more than 90 days seniority."
-                );
+                        "Referee " + refereeInfo.memberId
+                                + " is not a confirmed member with more than 90 days seniority.");
             }
             String refereeCollectivityId = memberRepository.getCollectivityIdOf(refereeInfo.memberId);
             if (request.collectivityIdentifier.equals(refereeCollectivityId)) {
@@ -74,8 +81,7 @@ public class MemberService {
 
         if (internalCount < externalCount) {
             throw new BadRequestException(
-                    "The number of referees from the target collectivity must be >= the number from other collectivities."
-            );
+                    "The number of referees from the target collectivity must be >= the number from other collectivities.");
         }
 
         Member member = new Member();
@@ -110,7 +116,6 @@ public class MemberService {
         if (member == null) {
             throw new NotFoundException("Member not found: " + memberId);
         }
-
         List<MemberPaymentResponse> responses = new ArrayList<>();
         for (CreateMemberPaymentRequest request : requests) {
             responses.add(createPayment(member, request));
@@ -118,23 +123,34 @@ public class MemberService {
         return responses;
     }
 
-    private MemberPaymentResponse createPayment(Member member, CreateMemberPaymentRequest request) {
+    private MemberPaymentResponse createPayment(Member member,
+                                                CreateMemberPaymentRequest request) {
+        // Vérification que le compte existe
+        FinancialAccount account =
+                financialAccountRepository.findById(request.getAccountCreditedIdentifier());
+        if (account == null) {
+            throw new NotFoundException(
+                    "Financial account not found: " + request.getAccountCreditedIdentifier());
+        }
+
         CollectivityTransaction transaction = new CollectivityTransaction();
         transaction.setId(UUID.randomUUID().toString());
         transaction.setAmount(request.getAmount());
         transaction.setCreationDate(LocalDate.now());
         transaction.setMemberId(member.id);
         transaction.setCollectivityId(member.collectivityId);
-        transaction.setAccountCreditedId(request.getAccountCreditedIdentifier());
+        transaction.setAccountCreditedId(account.id);
         transaction.setPaymentMode(request.getPaymentMode());
 
         transactionRepository.save(transaction);
+
+        // Construction de la réponse avec l'objet FinancialAccount complet
         MemberPaymentResponse response = new MemberPaymentResponse();
-        response.id               = transaction.getId();
-        response.amount           = request.getAmount();
-        response.paymentMode      = request.getPaymentMode();
-        response.accountCreditedId = request.getAccountCreditedIdentifier();
-        response.creationDate     = transaction.getCreationDate();
+        response.id              = transaction.getId();
+        response.amount          = request.getAmount();
+        response.paymentMode     = request.getPaymentMode();
+        response.accountCredited = toFinancialAccountResponse(account);
+        response.creationDate    = transaction.getCreationDate();
         return response;
     }
 
@@ -154,5 +170,21 @@ public class MemberService {
             response.referees = m.referees.stream().map(this::toResponse).toList();
         }
         return response;
+    }
+
+    private FinancialAccountResponse toFinancialAccountResponse(FinancialAccount account) {
+        FinancialAccountResponse res = new FinancialAccountResponse();
+        res.id                   = account.id;
+        res.accountType          = account.accountType;
+        res.amount               = account.amount;
+        res.holderName           = account.holderName;
+        res.bankName             = account.bankName;
+        res.bankCode             = account.bankCode;
+        res.bankBranchCode       = account.bankBranchCode;
+        res.bankAccountNumber    = account.bankAccountNumber;
+        res.bankAccountKey       = account.bankAccountKey;
+        res.mobileMoney = account.mobileMoney;
+        res.mobileNumber         = account.mobileNumber;
+        return res;
     }
 }

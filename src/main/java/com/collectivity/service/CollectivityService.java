@@ -5,12 +5,15 @@ import com.collectivity.dto.request.CreateCollectivityRequest;
 import com.collectivity.dto.response.CollectivityResponse;
 import com.collectivity.dto.response.CollectivityStructureResponse;
 import com.collectivity.dto.response.CollectivityTransactionResponse;
+import com.collectivity.dto.response.FinancialAccountResponse;
 import com.collectivity.entity.Collectivity;
 import com.collectivity.entity.CollectivityTransaction;
+import com.collectivity.entity.FinancialAccount;
 import com.collectivity.entity.Member;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
+import com.collectivity.repository.FinancialAccountRepository;
 import com.collectivity.repository.MemberRepository;
 import com.collectivity.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
@@ -22,19 +25,22 @@ import java.util.List;
 @Service
 public class CollectivityService {
 
-    private final CollectivityRepository collectivityRepository;
-    private final MemberRepository       memberRepository;
-    private final MemberService          memberService;
-    private final TransactionRepository  transactionRepository;
+    private final CollectivityRepository     collectivityRepository;
+    private final MemberRepository           memberRepository;
+    private final MemberService              memberService;
+    private final TransactionRepository      transactionRepository;
+    private final FinancialAccountRepository financialAccountRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
                                MemberRepository memberRepository,
                                MemberService memberService,
-                               TransactionRepository transactionRepository) {
-        this.collectivityRepository = collectivityRepository;
-        this.memberRepository       = memberRepository;
-        this.memberService          = memberService;
-        this.transactionRepository  = transactionRepository;
+                               TransactionRepository transactionRepository,
+                               FinancialAccountRepository financialAccountRepository) {
+        this.collectivityRepository     = collectivityRepository;
+        this.memberRepository           = memberRepository;
+        this.memberService              = memberService;
+        this.transactionRepository      = transactionRepository;
+        this.financialAccountRepository = financialAccountRepository;
     }
 
     public List<CollectivityResponse> createAll(List<CreateCollectivityRequest> requests) {
@@ -54,7 +60,8 @@ public class CollectivityService {
                 || request.structure.vicePresident == null
                 || request.structure.treasurer     == null
                 || request.structure.secretary     == null) {
-            throw new BadRequestException("Collectivity structure is required (president, vicePresident, treasurer, secretary).");
+            throw new BadRequestException(
+                    "Collectivity structure is required (president, vicePresident, treasurer, secretary).");
         }
         if (request.members == null || request.members.size() < 10) {
             throw new BadRequestException("At least 10 members are required.");
@@ -64,6 +71,7 @@ public class CollectivityService {
             throw new BadRequestException(
                     "At least 5 members must have seniority >= 6 months. Found: " + seniorCount);
         }
+
         Member president     = findMemberOrThrow(request.structure.president);
         Member vicePresident = findMemberOrThrow(request.structure.vicePresident);
         Member treasurer     = findMemberOrThrow(request.structure.treasurer);
@@ -72,6 +80,7 @@ public class CollectivityService {
         for (String memberId : request.members) {
             members.add(findMemberOrThrow(memberId));
         }
+
         Collectivity collectivity = new Collectivity();
         collectivity.location           = request.location;
         collectivity.federationApproval = request.federationApproval;
@@ -86,7 +95,8 @@ public class CollectivityService {
         return toResponse(saved);
     }
 
-    public CollectivityResponse updateInformations(String id, CollectivityInformationRequest request) {
+    public CollectivityResponse updateInformations(String id,
+                                                   CollectivityInformationRequest request) {
         Collectivity existing = collectivityRepository.findById(id);
         if (existing == null) {
             throw new NotFoundException("Collectivity not found: " + id);
@@ -105,7 +115,6 @@ public class CollectivityService {
         if (from.isAfter(to)) {
             throw new BadRequestException("'from' date must be before or equal to 'to' date.");
         }
-
         if (collectivityRepository.findById(id) == null) {
             throw new NotFoundException("Collectivity not found: " + id);
         }
@@ -114,11 +123,18 @@ public class CollectivityService {
 
         return transactions.stream().map(tx -> {
             CollectivityTransactionResponse res = new CollectivityTransactionResponse();
-            res.id               = tx.getId();
-            res.creationDate     = tx.getCreationDate();
-            res.amount           = tx.getAmount();
-            res.paymentMode      = tx.getPaymentMode();
-            res.accountCreditedId = tx.getAccountCreditedId();
+            res.id           = tx.getId();
+            res.creationDate = tx.getCreationDate();
+            res.amount       = tx.getAmount();
+            res.paymentMode  = tx.getPaymentMode();
+
+            // Résolution de l'objet FinancialAccount complet
+            FinancialAccount account =
+                    financialAccountRepository.findById(tx.getAccountCreditedId());
+            if (account != null) {
+                res.accountCredited = toFinancialAccountResponse(account);
+            }
+
             Member member = memberRepository.findById(tx.getMemberId());
             res.memberDebited = member != null ? memberService.toResponse(member) : null;
 
@@ -152,5 +168,21 @@ public class CollectivityService {
             response.members = c.members.stream().map(memberService::toResponse).toList();
         }
         return response;
+    }
+
+    private FinancialAccountResponse toFinancialAccountResponse(FinancialAccount account) {
+        FinancialAccountResponse res = new FinancialAccountResponse();
+        res.id                   = account.id;
+        res.accountType          = account.accountType;
+        res.amount               = account.amount;
+        res.holderName           = account.holderName;
+        res.bankName             = account.bankName;
+        res.bankCode             = account.bankCode;
+        res.bankBranchCode       = account.bankBranchCode;
+        res.bankAccountNumber    = account.bankAccountNumber;
+        res.bankAccountKey       = account.bankAccountKey;
+        res.mobileMoney = account.mobileMoney;
+        res.mobileNumber         = account.mobileNumber;
+        return res;
     }
 }

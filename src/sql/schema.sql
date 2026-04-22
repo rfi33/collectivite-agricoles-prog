@@ -93,3 +93,45 @@ CREATE TABLE collectivities_transactions (
                                              account_credited_id VARCHAR(50) NOT NULL,
                                              payment_mode VARCHAR(20) NOT NULL
 );
+CREATE TYPE account_type AS ENUM (
+    'CASH',
+    'MOBILE_BANKING',
+    'BANK'
+);
+
+CREATE TYPE mobile_money AS ENUM (
+    'AIRTEL_MONEY',
+    'MVOLA',
+    'ORANGE_MONEY'
+);
+
+CREATE TYPE bank_name AS ENUM (
+    'BRED',
+    'MCB',
+    'BMOI',
+    'BOA',
+    'BGFI',
+    'AFG',
+    'ACCES_BAQUE',
+    'BAOBAB',
+    'SIPEM'
+);
+
+CREATE TABLE financial_accounts (
+                                    id                     VARCHAR(50)            PRIMARY KEY,
+                                    collectivity_id        VARCHAR(50)            NOT NULL REFERENCES collectivities(id),
+                                    account_type           account_type           NOT NULL,
+                                    amount                 NUMERIC(15, 2)         NOT NULL DEFAULT 0,
+                                    holder_name            VARCHAR(255),
+                                    bank_name              bank_name,
+                                    bank_code              INTEGER,
+                                    bank_branch_code       INTEGER,
+                                    bank_account_number    BIGINT,
+                                    bank_account_key       INTEGER,
+                                    mobile_money mobile_money,
+                                    mobile_number          BIGINT
+);
+
+CREATE UNIQUE INDEX idx_one_cash_per_collectivity
+    ON financial_accounts (collectivity_id)
+    WHERE account_type = 'CASH';
