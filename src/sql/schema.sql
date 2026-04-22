@@ -61,3 +61,35 @@ CREATE TABLE member_referees (
 ALTER TABLE collectivities
     ADD COLUMN name   VARCHAR(255) UNIQUE,
     ADD COLUMN number VARCHAR(100) UNIQUE;
+
+
+CREATE TYPE frequency AS ENUM (
+    'WEEKLY',
+    'MONTHLY',
+    'ANNUALLY',
+    'PUNCTUALLY'
+    );
+
+CREATE TYPE activity_status AS ENUM (
+    'ACTIVE',
+    'INACTIVE'
+    );
+
+CREATE TABLE membership_fees (
+                                 id               VARCHAR(50)     PRIMARY KEY,
+                                 collectivity_id  VARCHAR(50)     NOT NULL REFERENCES collectivities(id),
+                                 eligible_from    DATE            NOT NULL,
+                                 frequency        frequency       NOT NULL,
+                                 amount           NUMERIC(15, 2)  NOT NULL CHECK (amount >= 0),
+                                 label            VARCHAR(255),
+                                 status           activity_status NOT NULL DEFAULT 'ACTIVE'
+);
+CREATE TABLE collectivities_transactions (
+                                             id VARCHAR(50) PRIMARY KEY,
+                                             creation_date DATE NOT NULL,
+                                             amount DECIMAL(15, 2) NOT NULL,
+                                             collectivity_id VARCHAR(50) NOT NULL,
+                                             member_id VARCHAR(50) NOT NULL,
+                                             account_credited_id VARCHAR(50) NOT NULL,
+                                             payment_mode VARCHAR(20) NOT NULL
+);
