@@ -61,13 +61,3 @@ CREATE TABLE member_referees (
 ALTER TABLE collectivities
     ADD COLUMN name   VARCHAR(255) UNIQUE,
     ADD COLUMN number VARCHAR(100) UNIQUE;
-
-CREATE TABLE collectivities_transactions (
-                                             id VARCHAR(50) PRIMARY KEY,
-                                             creation_date DATE NOT NULL,
-                                             amount DECIMAL(15, 2) NOT NULL,
-                                             collectivity_id VARCHAR(50) NOT NULL,
-                                             member_id VARCHAR(50) NOT NULL,
-                                             account_credited_id VARCHAR(50) NOT NULL,
-                                             payment_mode VARCHAR(20) NOT NULL
-);
