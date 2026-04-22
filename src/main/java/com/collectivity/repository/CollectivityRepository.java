@@ -15,6 +15,7 @@ public class CollectivityRepository {
     public CollectivityRepository(Connection connection) {
         this.connection = connection;
     }
+
     public Collectivity save(Collectivity c) {
         String sql = """
             INSERT INTO collectivities (
@@ -22,9 +23,7 @@ public class CollectivityRepository {
                 president_id, vice_president_id, treasurer_id, secretary_id
             ) VALUES (?,?,?,?,?,?,?)
         """;
-
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
             String id = UUID.randomUUID().toString();
             ps.setString(1, id);
             ps.setString(2, c.location);
@@ -34,10 +33,8 @@ public class CollectivityRepository {
             ps.setString(6, c.treasurer     != null ? c.treasurer.id     : null);
             ps.setString(7, c.secretary     != null ? c.secretary.id     : null);
             ps.executeUpdate();
-
             c.id = id;
             return c;
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save collectivity", e);
         }
@@ -45,16 +42,13 @@ public class CollectivityRepository {
 
     public void saveMembers(String collectivityId, List<String> memberIds) {
         String sql = "INSERT INTO collectivity_members (collectivity_id, member_id) VALUES (?,?)";
-
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
             for (String memberId : memberIds) {
                 ps.setString(1, collectivityId);
                 ps.setString(2, memberId);
                 ps.addBatch();
             }
             ps.executeBatch();
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to link members to collectivity", e);
         }
@@ -62,25 +56,46 @@ public class CollectivityRepository {
 
     public Collectivity findById(String id) {
         String sql = "SELECT * FROM collectivities WHERE id = ?";
-
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return mapRow(rs);
-            }
+            if (rs.next()) return mapRow(rs);
             return null;
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find collectivity id=" + id, e);
+        }
+    }
+
+    public boolean existsByNameOrNumber(String name, String number) {
+        String sql = "SELECT 1 FROM collectivities WHERE name = ? OR number = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, number);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check name/number uniqueness", e);
+        }
+    }
+
+    public Collectivity assignIdentity(String id, String name, String number) {
+        String sql = "UPDATE collectivities SET name = ?, number = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, number);
+            ps.setString(3, id);
+            ps.executeUpdate();
+            return findById(id);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to assign identity to collectivity id=" + id, e);
         }
     }
 
     private Collectivity mapRow(ResultSet rs) throws SQLException {
         Collectivity c = new Collectivity();
         c.id                 = rs.getString("id");
+        c.name               = rs.getString("name");
+        c.number             = rs.getString("number");
         c.location           = rs.getString("location");
         c.federationApproval = rs.getBoolean("federation_approval");
         return c;

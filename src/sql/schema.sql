@@ -58,3 +58,6 @@ CREATE TABLE member_referees (
                                  PRIMARY KEY (member_id, referee_id),
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
 );
+ALTER TABLE collectivities
+    ADD COLUMN name   VARCHAR(255) UNIQUE,
+    ADD COLUMN number VARCHAR(100) UNIQUE;

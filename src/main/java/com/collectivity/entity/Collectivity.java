@@ -8,14 +8,14 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode
+@Getter @Setter @ToString @EqualsAndHashCode
 public class Collectivity {
     public String       id;
+    public String       name;
+    public String       number;
     public String       location;
     public boolean      federationApproval;
     public Member       president;
