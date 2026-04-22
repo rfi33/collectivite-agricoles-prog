@@ -3,13 +3,16 @@ package com.collectivity.controller;
 import com.collectivity.dto.request.CollectivityInformationRequest;
 import com.collectivity.dto.request.CreateCollectivityRequest;
 import com.collectivity.dto.response.CollectivityResponse;
+import com.collectivity.dto.response.CollectivityTransactionResponse;
 import com.collectivity.dto.response.MembershipFeeResponse;
 import com.collectivity.service.CollectivityService;
 import com.collectivity.service.MembershipFeeService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,5 +43,12 @@ public class CollectivityController {
     public ResponseEntity<List<MembershipFeeResponse>> getMembershipFees(
             @PathVariable String id) {
         return ResponseEntity.ok(membershipFeeService.findByCollectivityId(id));
+    }
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<CollectivityTransactionResponse>> getTransactions(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(collectivityService.getTransactions(id, from, to));
     }
 }
