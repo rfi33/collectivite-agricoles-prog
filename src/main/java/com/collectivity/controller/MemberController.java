@@ -1,6 +1,5 @@
 package com.collectivity.controller;
 
-import com.collectivity.dto.request.CreateMemberRequest;
 import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.service.MemberService;
 import org.springframework.http.HttpStatus;

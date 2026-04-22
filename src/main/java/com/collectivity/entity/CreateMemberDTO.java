@@ -9,8 +9,6 @@ import java.util.List;
 @Setter
 @Getter
 public class CreateMemberDTO {
-
-    // MemberInformation fields
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
@@ -20,13 +18,10 @@ public class CreateMemberDTO {
     private String phoneNumber;
     private String email;
     private MemberOccupation occupation;
-
-    // CreateMember-specific fields
-    private String collectivityIdentifier;  // ID of the target collectivity
-    private List<String> referees;          // List<MemberIdentifier>
+    private String collectivityIdentifier;
+    private List<String> referees;
     private Boolean registrationFeePaid;
     private Boolean membershipDuesPaid;
-
     public CreateMemberDTO() {}
 
 }
