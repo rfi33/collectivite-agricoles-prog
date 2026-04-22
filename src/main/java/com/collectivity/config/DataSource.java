@@ -1,5 +1,6 @@
 package com.collectivity.config;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,9 +11,11 @@ import java.sql.SQLException;
 @Configuration
 public class DataSource {
 
-    private final String jdbcUrl  = System.getenv("JDBC_URL");
-    private final String user     = System.getenv("DB_USER");
-    private final String password = System.getenv("DB_PASSWORD");
+    private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
+    private final String jdbcUrl  = dotenv.get("JDBC_URL");
+    private final String user     = dotenv.get("DB_USER");
+    private final String password = dotenv.get("DB_PASSWORD");
 
     @Bean
     public Connection getConnection() {
