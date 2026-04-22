@@ -1,5 +1,6 @@
 package com.collectivity.service;
 
+import com.collectivity.dto.request.CreateMemberRequest;
 import com.collectivity.dto.request.RefereeInfoRequest;
 import com.collectivity.dto.response.MemberResponse;
 import com.collectivity.entity.Member;
