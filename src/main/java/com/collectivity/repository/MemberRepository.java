@@ -3,6 +3,7 @@ package com.collectivity.repository;
 import com.collectivity.entity.Gender;
 import com.collectivity.entity.Member;
 import com.collectivity.entity.MemberOccupation;
+import org.postgresql.util.PGobject;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -35,12 +36,12 @@ public class MemberRepository {
             ps.setString(2, m.firstName);
             ps.setString(3, m.lastName);
             ps.setDate(4, Date.valueOf(m.birthDate));
-            ps.setString(5, m.gender.name());
+            ps.setObject(5, toPGEnum("gender", m.gender.name()));
             ps.setString(6, m.address);
             ps.setString(7, m.profession);
             ps.setString(8, m.phoneNumber);
             ps.setString(9, m.email);
-            ps.setString(10, m.occupation.name());
+            ps.setObject(10, toPGEnum("member_occupation", m.occupation.name()));
             ps.setString(11, m.collectivityId);
             ps.setDate(12, Date.valueOf(LocalDate.now()));
             ps.setBoolean(13, true);
@@ -175,5 +176,12 @@ public class MemberRepository {
         m.collectivityId = rs.getString("collectivity_id");
         m.joinDate       = rs.getDate("join_date").toLocalDate();
         return m;
+    }
+
+    private PGobject toPGEnum(String typeName, String value) throws SQLException {
+        PGobject pgObject = new PGobject();
+        pgObject.setType(typeName);
+        pgObject.setValue(value);
+        return pgObject;
     }
 }

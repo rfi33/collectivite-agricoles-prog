@@ -4,6 +4,7 @@ import com.collectivity.entity.AccountType;
 import com.collectivity.entity.Bank;
 import com.collectivity.entity.FinancialAccount;
 import com.collectivity.entity.MobileMoney;
+import org.postgresql.util.PGobject;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -33,15 +34,17 @@ public class FinancialAccountRepository {
             String id = UUID.randomUUID().toString();
             ps.setString(1, id);
             ps.setString(2, account.collectivityId);
-            ps.setString(3, account.accountType.name());
+            ps.setObject(3, toPGEnum("account_type", account.accountType.name()));
             ps.setBigDecimal(4, account.amount != null ? account.amount : java.math.BigDecimal.ZERO);
             ps.setString(5, account.holderName);
-            ps.setString(6, account.bankName != null ? account.bankName.name() : null);
+            ps.setObject(6, account.bankName != null
+                    ? toPGEnum("bank_name", account.bankName.name()) : null);
             setNullableInt(ps, 7, account.bankCode);
             setNullableInt(ps, 8, account.bankBranchCode);
             setNullableLong(ps, 9, account.bankAccountNumber);
             setNullableInt(ps, 10, account.bankAccountKey);
-            ps.setString(11, account.mobileMoney != null ? account.mobileMoney.name() : null);
+            ps.setObject(11, account.mobileMoney != null
+                    ? toPGEnum("mobile_money", account.mobileMoney.name()) : null);
             setNullableLong(ps, 12, account.mobileNumber);
             ps.executeUpdate();
             account.id = id;
@@ -126,5 +129,12 @@ public class FinancialAccountRepository {
     private void setNullableLong(PreparedStatement ps, int index, Long value) throws SQLException {
         if (value != null) ps.setLong(index, value);
         else ps.setNull(index, Types.BIGINT);
+    }
+
+    private PGobject toPGEnum(String typeName, String value) throws SQLException {
+        PGobject pgObject = new PGobject();
+        pgObject.setType(typeName);
+        pgObject.setValue(value);
+        return pgObject;
     }
 }

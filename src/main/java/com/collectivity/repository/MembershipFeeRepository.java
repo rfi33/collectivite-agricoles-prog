@@ -3,6 +3,7 @@ package com.collectivity.repository;
 import com.collectivity.entity.ActivityStatus;
 import com.collectivity.entity.Frequency;
 import com.collectivity.entity.MembershipFee;
+import org.postgresql.util.PGobject;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public class  MembershipFeeRepository {
+public class MembershipFeeRepository {
 
     private final Connection connection;
 
@@ -43,10 +44,10 @@ public class  MembershipFeeRepository {
             ps.setString(1, id);
             ps.setString(2, fee.collectivityId);
             ps.setDate(3, Date.valueOf(fee.eligibleFrom));
-            ps.setString(4, fee.frequency.name());
+            ps.setObject(4, toPGEnum("frequency", fee.frequency.name()));
             ps.setBigDecimal(5, fee.amount);
             ps.setString(6, fee.label);
-            ps.setString(7, fee.status.name());
+            ps.setObject(7, toPGEnum("activity_status", fee.status.name()));
             ps.executeUpdate();
             fee.id = id;
             return fee;
@@ -65,5 +66,12 @@ public class  MembershipFeeRepository {
         fee.label          = rs.getString("label");
         fee.status         = ActivityStatus.valueOf(rs.getString("status"));
         return fee;
+    }
+
+    private PGobject toPGEnum(String typeName, String value) throws SQLException {
+        PGobject pgObject = new PGobject();
+        pgObject.setType(typeName);
+        pgObject.setValue(value);
+        return pgObject;
     }
 }
