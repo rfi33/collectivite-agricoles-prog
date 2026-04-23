@@ -19,7 +19,7 @@ public class TransactionRepository {
         this.connection = connection;
     }
 
-    public void save(CollectivityTransaction tx) {
+    public CollectivityTransaction save(CollectivityTransaction tx) {
         String sql = """
             INSERT INTO collectivities_transactions (
                 id, creation_date, amount, collectivity_id,
@@ -27,7 +27,8 @@ public class TransactionRepository {
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, UUID.randomUUID().toString());
+            String id = UUID.randomUUID().toString();
+            ps.setString(1, id);
             ps.setDate(2, Date.valueOf(tx.getCreationDate()));
             ps.setDouble(3, tx.getAmount());
             ps.setString(4, tx.getCollectivityId());
@@ -35,6 +36,8 @@ public class TransactionRepository {
             ps.setString(6, tx.getAccountCreditedId());
             ps.setString(7, tx.getPaymentMode().name());
             ps.executeUpdate();
+            tx.setId(id);
+            return tx;
         } catch (SQLException e) {
             throw new RuntimeException("Erreur SQL lors de l'enregistrement de la transaction", e);
         }

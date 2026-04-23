@@ -7,6 +7,7 @@ import com.collectivity.entity.MobileMoney;
 import org.postgresql.util.PGobject;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class FinancialAccountRepository {
             ps.setString(1, id);
             ps.setString(2, account.collectivityId);
             ps.setObject(3, toPGEnum("account_type", account.accountType.name()));
-            ps.setBigDecimal(4, account.amount != null ? account.amount : java.math.BigDecimal.ZERO);
+            ps.setBigDecimal(4, account.amount != null ? account.amount : BigDecimal.ZERO);
             ps.setString(5, account.holderName);
             ps.setObject(6, account.bankName != null
                     ? toPGEnum("bank_name", account.bankName.name()) : null);
@@ -51,6 +52,20 @@ public class FinancialAccountRepository {
             return account;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save financial account: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Increments the account balance by the given amount after a payment is recorded.
+     */
+    public void credit(String accountId, BigDecimal amount) {
+        String sql = "UPDATE financial_accounts SET amount = amount + ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setBigDecimal(1, amount);
+            ps.setString(2, accountId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to credit financial account id=" + accountId, e);
         }
     }
 
@@ -112,6 +127,7 @@ public class FinancialAccountRepository {
 
         int accountKey = rs.getInt("bank_account_key");
         a.bankAccountKey = rs.wasNull() ? null : accountKey;
+
         String mbs = rs.getString("mobile_money");
         a.mobileMoney = mbs != null ? MobileMoney.valueOf(mbs) : null;
 

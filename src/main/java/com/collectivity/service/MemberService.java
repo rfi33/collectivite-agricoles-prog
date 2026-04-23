@@ -16,10 +16,10 @@ import com.collectivity.repository.MemberRepository;
 import com.collectivity.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class MemberService {
@@ -125,7 +125,6 @@ public class MemberService {
 
     private MemberPaymentResponse createPayment(Member member,
                                                 CreateMemberPaymentRequest request) {
-        // Vérification que le compte existe
         FinancialAccount account =
                 financialAccountRepository.findById(request.getAccountCreditedIdentifier());
         if (account == null) {
@@ -134,7 +133,6 @@ public class MemberService {
         }
 
         CollectivityTransaction transaction = new CollectivityTransaction();
-        transaction.setId(UUID.randomUUID().toString());
         transaction.setAmount(request.getAmount());
         transaction.setCreationDate(LocalDate.now());
         transaction.setMemberId(member.id);
@@ -142,15 +140,21 @@ public class MemberService {
         transaction.setAccountCreditedId(account.id);
         transaction.setPaymentMode(request.getPaymentMode());
 
-        transactionRepository.save(transaction);
+        // save() génère et assigne l'id dans la transaction
+        CollectivityTransaction saved = transactionRepository.save(transaction);
 
-        // Construction de la réponse avec l'objet FinancialAccount complet
+        // Mise à jour du solde du compte crédité
+        financialAccountRepository.credit(account.id, BigDecimal.valueOf(request.getAmount()));
+
+        // Rechargement du compte pour avoir le solde à jour dans la réponse
+        FinancialAccount updatedAccount = financialAccountRepository.findById(account.id);
+
         MemberPaymentResponse response = new MemberPaymentResponse();
-        response.id              = transaction.getId();
+        response.id              = saved.getId();
         response.amount          = request.getAmount();
         response.paymentMode     = request.getPaymentMode();
-        response.accountCredited = toFinancialAccountResponse(account);
-        response.creationDate    = transaction.getCreationDate();
+        response.accountCredited = toFinancialAccountResponse(updatedAccount);
+        response.creationDate    = saved.getCreationDate();
         return response;
     }
 
@@ -174,17 +178,17 @@ public class MemberService {
 
     private FinancialAccountResponse toFinancialAccountResponse(FinancialAccount account) {
         FinancialAccountResponse res = new FinancialAccountResponse();
-        res.id                   = account.id;
-        res.accountType          = account.accountType;
-        res.amount               = account.amount;
-        res.holderName           = account.holderName;
-        res.bankName             = account.bankName;
-        res.bankCode             = account.bankCode;
-        res.bankBranchCode       = account.bankBranchCode;
-        res.bankAccountNumber    = account.bankAccountNumber;
-        res.bankAccountKey       = account.bankAccountKey;
-        res.mobileMoney = account.mobileMoney;
-        res.mobileNumber         = account.mobileNumber;
+        res.id                = account.id;
+        res.accountType       = account.accountType;
+        res.amount            = account.amount;
+        res.holderName        = account.holderName;
+        res.bankName          = account.bankName;
+        res.bankCode          = account.bankCode;
+        res.bankBranchCode    = account.bankBranchCode;
+        res.bankAccountNumber = account.bankAccountNumber;
+        res.bankAccountKey    = account.bankAccountKey;
+        res.mobileMoney       = account.mobileMoney;
+        res.mobileNumber      = account.mobileNumber;
         return res;
     }
 }
