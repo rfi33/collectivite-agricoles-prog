@@ -22,11 +22,13 @@ public class CollectivityController {
 
     private final CollectivityService  collectivityService;
     private final MembershipFeeService membershipFeeService;
+
     public CollectivityController(CollectivityService collectivityService,
                                   MembershipFeeService membershipFeeService) {
         this.collectivityService  = collectivityService;
         this.membershipFeeService = membershipFeeService;
     }
+
     @PostMapping
     public ResponseEntity<List<CollectivityResponse>> create(
             @RequestBody List<CreateCollectivityRequest> requests) {
@@ -34,6 +36,12 @@ public class CollectivityController {
                 .status(HttpStatus.CREATED)
                 .body(collectivityService.createAll(requests));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CollectivityResponse> getById(@PathVariable String id) {
+        return ResponseEntity.ok(collectivityService.findById(id));
+    }
+
     @PutMapping("/{id}/informations")
     public ResponseEntity<CollectivityResponse> updateInformations(
             @PathVariable String id,
@@ -53,6 +61,7 @@ public class CollectivityController {
             @RequestBody List<CreateMembershipFeeRequest> requests) {
         return ResponseEntity.ok(membershipFeeService.createAll(id, requests));
     }
+
     @GetMapping("/{id}/transactions")
     public ResponseEntity<List<CollectivityTransactionResponse>> getTransactions(
             @PathVariable String id,

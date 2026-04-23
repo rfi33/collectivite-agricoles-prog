@@ -95,6 +95,16 @@ public class CollectivityService {
         return toResponse(saved);
     }
 
+
+    public CollectivityResponse findById(String id) {
+        Collectivity collectivity = collectivityRepository.findByIdWithStructure(id);
+        if (collectivity == null) {
+            throw new NotFoundException("Collectivity not found: " + id);
+        }
+        collectivity.members = memberRepository.findByCollectivityId(id);
+        return toResponse(collectivity);
+    }
+
     public CollectivityResponse updateInformations(String id,
                                                    CollectivityInformationRequest request) {
         Collectivity existing = collectivityRepository.findById(id);
@@ -128,7 +138,6 @@ public class CollectivityService {
             res.amount       = tx.getAmount();
             res.paymentMode  = tx.getPaymentMode();
 
-            // Résolution de l'objet FinancialAccount complet
             FinancialAccount account =
                     financialAccountRepository.findById(tx.getAccountCreditedId());
             if (account != null) {
@@ -172,17 +181,17 @@ public class CollectivityService {
 
     private FinancialAccountResponse toFinancialAccountResponse(FinancialAccount account) {
         FinancialAccountResponse res = new FinancialAccountResponse();
-        res.id                   = account.id;
-        res.accountType          = account.accountType;
-        res.amount               = account.amount;
-        res.holderName           = account.holderName;
-        res.bankName             = account.bankName;
-        res.bankCode             = account.bankCode;
-        res.bankBranchCode       = account.bankBranchCode;
-        res.bankAccountNumber    = account.bankAccountNumber;
-        res.bankAccountKey       = account.bankAccountKey;
-        res.mobileMoney = account.mobileMoney;
-        res.mobileNumber         = account.mobileNumber;
+        res.id                = account.id;
+        res.accountType       = account.accountType;
+        res.amount            = account.amount;
+        res.holderName        = account.holderName;
+        res.bankName          = account.bankName;
+        res.bankCode          = account.bankCode;
+        res.bankBranchCode    = account.bankBranchCode;
+        res.bankAccountNumber = account.bankAccountNumber;
+        res.bankAccountKey    = account.bankAccountKey;
+        res.mobileMoney       = account.mobileMoney;
+        res.mobileNumber      = account.mobileNumber;
         return res;
     }
 }
