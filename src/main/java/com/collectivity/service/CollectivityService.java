@@ -83,6 +83,7 @@ public class CollectivityService {
 
         Collectivity collectivity = new Collectivity();
         collectivity.location           = request.location;
+        collectivity.specialization     = request.specialization;
         collectivity.federationApproval = request.federationApproval;
         collectivity.president          = president;
         collectivity.vicePresident      = vicePresident;
@@ -94,7 +95,6 @@ public class CollectivityService {
         collectivityRepository.saveMembers(saved.id, request.members);
         return toResponse(saved);
     }
-
 
     public CollectivityResponse findById(String id) {
         Collectivity collectivity = collectivityRepository.findByIdWithStructure(id);
@@ -161,10 +161,11 @@ public class CollectivityService {
 
     public CollectivityResponse toResponse(Collectivity c) {
         CollectivityResponse response = new CollectivityResponse();
-        response.id       = c.id;
-        response.name     = c.name;
-        response.number   = c.number;
-        response.location = c.location;
+        response.id             = c.id;
+        response.name           = c.name;
+        response.number         = c.number;
+        response.location       = c.location;
+        response.specialization = c.specialization;
 
         CollectivityStructureResponse structure = new CollectivityStructureResponse();
         structure.president     = c.president     != null ? memberService.toResponse(c.president)     : null;

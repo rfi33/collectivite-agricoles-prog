@@ -2,6 +2,7 @@ CREATE TYPE gender AS ENUM ('MALE', 'FEMALE');
 
 CREATE TYPE member_occupation AS ENUM (
     'JUNIOR',
+    'CONFIRMED',
     'SENIOR',
     'SECRETARY',
     'TREASURER',
@@ -9,10 +10,58 @@ CREATE TYPE member_occupation AS ENUM (
     'PRESIDENT'
 );
 
+CREATE TYPE frequency AS ENUM (
+    'WEEKLY',
+    'MONTHLY',
+    'ANNUALLY',
+    'PUNCTUALLY'
+);
+
+CREATE TYPE activity_status AS ENUM (
+    'ACTIVE',
+    'INACTIVE'
+);
+
+CREATE TYPE account_type AS ENUM (
+    'CASH',
+    'MOBILE_BANKING',
+    'BANK'
+);
+
+CREATE TYPE mobile_money AS ENUM (
+    'AIRTEL_MONEY',
+    'MVOLA',
+    'ORANGE_MONEY'
+);
+
+CREATE TYPE bank_name AS ENUM (
+    'BRED',
+    'MCB',
+    'BMOI',
+    'BOA',
+    'BGFI',
+    'AFG',
+    'ACCES_BAQUE',
+    'BAOBAB',
+    'SIPEM'
+);
+
+CREATE TYPE specialization AS ENUM (
+    'RIZICULTURE',
+    'PISCICULTURE',
+    'APICULTURE',
+    'AGRICULTURE_GENERALE',
+    'ELEVAGE',
+    'MARAICHAGE'
+);
+
 CREATE TABLE collectivities (
-                                id                  VARCHAR(36)  PRIMARY KEY,
-                                location            VARCHAR(255) NOT NULL,
-                                federation_approval BOOLEAN      NOT NULL DEFAULT FALSE,
+                                id                  VARCHAR(36)      PRIMARY KEY,
+                                name                VARCHAR(255)     UNIQUE,
+                                number              INTEGER          UNIQUE,
+                                location            VARCHAR(255)     NOT NULL,
+                                specialization      specialization,
+                                federation_approval BOOLEAN          NOT NULL DEFAULT FALSE,
                                 president_id        VARCHAR(36),
                                 vice_president_id   VARCHAR(36),
                                 treasurer_id        VARCHAR(36),
@@ -60,23 +109,6 @@ CREATE TABLE member_referees (
                                  CONSTRAINT chk_no_self_referee CHECK (member_id <> referee_id)
 );
 
--- Correction : number en INTEGER (était VARCHAR dans la version originale)
-ALTER TABLE collectivities
-    ADD COLUMN name   VARCHAR(255) UNIQUE,
-    ADD COLUMN number INTEGER      UNIQUE;
-
-CREATE TYPE frequency AS ENUM (
-    'WEEKLY',
-    'MONTHLY',
-    'ANNUALLY',
-    'PUNCTUALLY'
-);
-
-CREATE TYPE activity_status AS ENUM (
-    'ACTIVE',
-    'INACTIVE'
-);
-
 CREATE TABLE membership_fees (
                                  id              VARCHAR(50)     PRIMARY KEY,
                                  collectivity_id VARCHAR(50)     NOT NULL REFERENCES collectivities(id),
@@ -85,41 +117,6 @@ CREATE TABLE membership_fees (
                                  amount          NUMERIC(15, 2)  NOT NULL CHECK (amount >= 0),
                                  label           VARCHAR(255),
                                  status          activity_status NOT NULL DEFAULT 'ACTIVE'
-);
-
-CREATE TABLE collectivities_transactions (
-                                             id                  VARCHAR(50)    PRIMARY KEY,
-                                             creation_date       DATE           NOT NULL,
-                                             amount              DECIMAL(15, 2) NOT NULL,
-                                             collectivity_id     VARCHAR(50)    NOT NULL,
-                                             member_id           VARCHAR(50)    NOT NULL,
-                                             account_credited_id VARCHAR(50)    NOT NULL,
-                                             payment_mode        VARCHAR(20)    NOT NULL
-);
-
-CREATE TYPE account_type AS ENUM (
-    'CASH',
-    'MOBILE_BANKING',
-    'BANK'
-);
-
--- Correction : type renommé mobile_money (cohérent avec la colonne et le code Java)
-CREATE TYPE mobile_money AS ENUM (
-    'AIRTEL_MONEY',
-    'MVOLA',
-    'ORANGE_MONEY'
-);
-
-CREATE TYPE bank_name AS ENUM (
-    'BRED',
-    'MCB',
-    'BMOI',
-    'BOA',
-    'BGFI',
-    'AFG',
-    'ACCES_BAQUE',
-    'BAOBAB',
-    'SIPEM'
 );
 
 CREATE TABLE financial_accounts (
@@ -140,3 +137,13 @@ CREATE TABLE financial_accounts (
 CREATE UNIQUE INDEX idx_one_cash_per_collectivity
     ON financial_accounts (collectivity_id)
     WHERE account_type = 'CASH';
+
+CREATE TABLE collectivities_transactions (
+                                             id                  VARCHAR(50)    PRIMARY KEY,
+                                             creation_date       DATE           NOT NULL,
+                                             amount              DECIMAL(15, 2) NOT NULL,
+                                             collectivity_id     VARCHAR(50)    NOT NULL REFERENCES collectivities(id),
+                                             member_id           VARCHAR(50)    NOT NULL REFERENCES members(id),
+                                             account_credited_id VARCHAR(50)    NOT NULL REFERENCES financial_accounts(id),
+                                             payment_mode        VARCHAR(20)    NOT NULL
+);

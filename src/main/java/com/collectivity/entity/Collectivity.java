@@ -13,14 +13,15 @@ import java.util.List;
 @NoArgsConstructor
 @Getter @Setter @ToString @EqualsAndHashCode
 public class Collectivity {
-    public String       id;
-    public String       name;
-    public Integer      number;
-    public String       location;
-    public boolean      federationApproval;
-    public Member       president;
-    public Member       vicePresident;
-    public Member       treasurer;
-    public Member       secretary;
-    public List<Member> members;
+    public String         id;
+    public String         name;
+    public Integer        number;
+    public String         location;
+    public Specialization specialization;
+    public boolean        federationApproval;
+    public Member         president;
+    public Member         vicePresident;
+    public Member         treasurer;
+    public Member         secretary;
+    public List<Member>   members;
 }

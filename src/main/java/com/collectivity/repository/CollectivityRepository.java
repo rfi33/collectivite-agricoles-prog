@@ -2,6 +2,8 @@ package com.collectivity.repository;
 
 import com.collectivity.entity.Collectivity;
 import com.collectivity.entity.Member;
+import com.collectivity.entity.Specialization;
+import org.postgresql.util.PGobject;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -20,19 +22,21 @@ public class CollectivityRepository {
     public Collectivity save(Collectivity c) {
         String sql = """
             INSERT INTO collectivities (
-                id, location, federation_approval,
+                id, location, specialization, federation_approval,
                 president_id, vice_president_id, treasurer_id, secretary_id
-            ) VALUES (?,?,?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?,?,?)
         """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             String id = UUID.randomUUID().toString();
             ps.setString(1, id);
             ps.setString(2, c.location);
-            ps.setBoolean(3, c.federationApproval);
-            ps.setString(4, c.president     != null ? c.president.id     : null);
-            ps.setString(5, c.vicePresident != null ? c.vicePresident.id : null);
-            ps.setString(6, c.treasurer     != null ? c.treasurer.id     : null);
-            ps.setString(7, c.secretary     != null ? c.secretary.id     : null);
+            ps.setObject(3, c.specialization != null
+                    ? toPGEnum("specialization", c.specialization.name()) : null);
+            ps.setBoolean(4, c.federationApproval);
+            ps.setString(5, c.president     != null ? c.president.id     : null);
+            ps.setString(6, c.vicePresident != null ? c.vicePresident.id : null);
+            ps.setString(7, c.treasurer     != null ? c.treasurer.id     : null);
+            ps.setString(8, c.secretary     != null ? c.secretary.id     : null);
             ps.executeUpdate();
             c.id = id;
             return c;
@@ -70,7 +74,7 @@ public class CollectivityRepository {
     public Collectivity findByIdWithStructure(String id) {
         String sql = """
             SELECT
-                c.id, c.name, c.number, c.location, c.federation_approval,
+                c.id, c.name, c.number, c.location, c.specialization, c.federation_approval,
                 p.id  AS p_id,  p.first_name  AS p_fn,  p.last_name  AS p_ln,
                 vp.id AS vp_id, vp.first_name AS vp_fn, vp.last_name AS vp_ln,
                 t.id  AS t_id,  t.first_name  AS t_fn,  t.last_name  AS t_ln,
@@ -135,6 +139,8 @@ public class CollectivityRepository {
         c.number             = rs.wasNull() ? null : num;
         c.location           = rs.getString("location");
         c.federationApproval = rs.getBoolean("federation_approval");
+        String spec          = rs.getString("specialization");
+        c.specialization     = spec != null ? Specialization.valueOf(spec) : null;
         return c;
     }
 
@@ -146,5 +152,12 @@ public class CollectivityRepository {
         m.firstName = rs.getString(prefix + "_fn");
         m.lastName  = rs.getString(prefix + "_ln");
         return m;
+    }
+
+    private PGobject toPGEnum(String typeName, String value) throws SQLException {
+        PGobject pgObject = new PGobject();
+        pgObject.setType(typeName);
+        pgObject.setValue(value);
+        return pgObject;
     }
 }
