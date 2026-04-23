@@ -3,6 +3,7 @@ package com.collectivity.repository;
 import com.collectivity.entity.CollectivityTransaction;
 import com.collectivity.entity.PaymentMode;
 import org.springframework.stereotype.Repository;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Repository
 public class TransactionRepository {
+
     private final Connection connection;
 
     public TransactionRepository(Connection connection) {
@@ -18,7 +20,12 @@ public class TransactionRepository {
     }
 
     public void save(CollectivityTransaction tx) {
-        String sql = "INSERT INTO collectivities_transactions (id, creation_date, amount, collectivity_id, member_id, account_credited_id, payment_mode) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = """
+            INSERT INTO collectivities_transactions (
+                id, creation_date, amount, collectivity_id,
+                member_id, account_credited_id, payment_mode
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, UUID.randomUUID().toString());
             ps.setDate(2, Date.valueOf(tx.getCreationDate()));
@@ -32,15 +39,20 @@ public class TransactionRepository {
             throw new RuntimeException("Erreur SQL lors de l'enregistrement de la transaction", e);
         }
     }
-    public List<CollectivityTransaction> findByPeriod(String collectivityId, LocalDate from, LocalDate to) {
-        List<CollectivityTransaction> transactions = new ArrayList<>();
-        String sql = "SELECT * FROM collectivities_transactions WHERE collectivity_id = ? AND creation_date BETWEEN ? AND ?";
 
+    public List<CollectivityTransaction> findByPeriod(String collectivityId,
+                                                      LocalDate from,
+                                                      LocalDate to) {
+        List<CollectivityTransaction> transactions = new ArrayList<>();
+        String sql = """
+            SELECT * FROM collectivities_transactions
+            WHERE collectivity_id = ?
+              AND creation_date BETWEEN ? AND ?
+        """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, collectivityId);
             ps.setDate(2, Date.valueOf(from));
             ps.setDate(3, Date.valueOf(to));
-
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 transactions.add(new CollectivityTransaction(
@@ -57,5 +69,24 @@ public class TransactionRepository {
             throw new RuntimeException("Transaction error", e);
         }
         return transactions;
+    }
+
+    public double sumAmountAfterDate(String accountId, LocalDate after) {
+        String sql = """
+            SELECT COALESCE(SUM(amount), 0)
+            FROM collectivities_transactions
+            WHERE account_credited_id = ?
+              AND creation_date > ?
+        """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, accountId);
+            ps.setDate(2, Date.valueOf(after));
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getDouble(1);
+            return 0.0;
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Failed to sum transactions after date for account id=" + accountId, e);
+        }
     }
 }
