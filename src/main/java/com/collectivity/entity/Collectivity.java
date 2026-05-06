@@ -1,9 +1,6 @@
 package com.collectivity.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,30 +8,28 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
+@Getter
+@Setter
 public class Collectivity {
     private String id;
     private String name;
     private Integer number;
     private String location;
-    private String specialization;
     private CollectivityStructure collectivityStructure;
     private List<Member> members;
     private Boolean federationApproval;
 
     public boolean hasEnoughMembers() {
-        return members.size() >= 10;
+        return members != null && members.size() >= 10;
     }
 
     public List<Member> addMembers(List<Member> newMembers) {
-        if(members == null){
-            members = new ArrayList<>();
-        }
-        for (Member member : newMembers) {
-            member.getCollectivities().add(this);
+        if (members == null) members = new ArrayList<>();
+        for (Member m : newMembers) {
+            if (m.getCollectivities() == null) m.setCollectivities(new ArrayList<>());
+            if (!m.getCollectivities().contains(this)) m.getCollectivities().add(this);
         }
         members.addAll(newMembers);
-
         return members;
     }
 }

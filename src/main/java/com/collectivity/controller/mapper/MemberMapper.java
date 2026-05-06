@@ -1,4 +1,4 @@
-package com.collectivity.mapper;
+package com.collectivity.controller.mapper;
 
 import com.collectivity.entity.Gender;
 import com.collectivity.entity.Member;

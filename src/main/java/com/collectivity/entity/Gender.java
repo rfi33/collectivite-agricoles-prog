@@ -1,5 +1,3 @@
 package com.collectivity.entity;
 
-public enum Gender {
-    MALE, FEMALE
-}
+public enum Gender { MALE, FEMALE }

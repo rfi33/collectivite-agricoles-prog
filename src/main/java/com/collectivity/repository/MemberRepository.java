@@ -1,19 +1,16 @@
 package com.collectivity.repository;
 
-
 import com.collectivity.entity.Collectivity;
 import com.collectivity.entity.Member;
 import com.collectivity.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -24,89 +21,73 @@ public class MemberRepository {
     private final MemberRefereeRepository memberRefereeRepository;
 
     public List<Member> saveAll(List<Member> members) {
-        List<Member> memberList = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-                """
-                        insert into "member" (id, 
-                                              first_name,
-                                              last_name,
-                                              birth_date,
-                                              gender,
-                                              address,
-                                              profession,
-                                              phone_number,
-                                              email,
-                                              occupation,
-                                              registration_fee_paid,
-                                              membership_dues_paid) 
-                        values (?, ?, ?, ?, ?::gender, ?, ?, ?, ?, ?::member_occupation, ?, ?) 
-                        on conflict (id) do update set first_name = excluded.first_name,
-                                                       last_name = excluded.last_name,
-                                                       birth_date = excluded.birth_date,
-                                                       gender = excluded.gender,
-                                                       phone_number = excluded.phone_number,
-                                                       email = excluded.email,
-                                                       address = excluded.address,
-                                                       profession = excluded.profession,
-                                                       occupation = excluded.occupation
-                        returning id;
-                        """)) {
-            for (Member member : members) {
-                preparedStatement.setString(1, member.getId());
-                preparedStatement.setString(2, member.getFirstName());
-                preparedStatement.setString(3, member.getLastName());
-                preparedStatement.setDate(4, java.sql.Date.valueOf(member.getBirthDate()));
-                preparedStatement.setObject(5, member.getGender().name());
-                preparedStatement.setString(6, member.getAddress());
-                preparedStatement.setString(7, member.getProfession());
-                preparedStatement.setString(8, member.getPhoneNumber());
-                preparedStatement.setString(9, member.getEmail());
-                preparedStatement.setObject(10, member.getOccupation().name());
-                preparedStatement.setBoolean(11, member.getRegistrationFeePaid());
-                preparedStatement.setBoolean(12, member.getMembershipDuesPaid());
-                preparedStatement.addBatch();
+        String sql = """
+                INSERT INTO "member"
+                    (id, first_name, last_name, birth_date, gender, address, profession,
+                     phone_number, email, occupation, registration_fee_paid, membership_dues_paid)
+                VALUES (?, ?, ?, ?, ?::gender, ?, ?, ?, ?, ?::member_occupation, ?, ?)
+                ON CONFLICT (id) DO UPDATE SET
+                    first_name = excluded.first_name,
+                    last_name  = excluded.last_name,
+                    birth_date = excluded.birth_date,
+                    gender     = excluded.gender,
+                    phone_number = excluded.phone_number,
+                    email      = excluded.email,
+                    address    = excluded.address,
+                    profession = excluded.profession,
+                    occupation = excluded.occupation
+                """;
+        List<Member> result = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (Member m : members) {
+                if (m.getId() == null) m.setId(UUID.randomUUID().toString());
+                ps.setString(1, m.getId());
+                ps.setString(2, m.getFirstName());
+                ps.setString(3, m.getLastName());
+                ps.setDate(4, Date.valueOf(m.getBirthDate()));
+                ps.setObject(5, m.getGender() == null ? "JUNIOR" : m.getGender().name());
+                ps.setString(6, m.getAddress());
+                ps.setString(7, m.getProfession());
+                ps.setString(8, m.getPhoneNumber());
+                ps.setString(9, m.getEmail());
+                ps.setObject(10, m.getOccupation() == null ? "JUNIOR" : m.getOccupation().name());
+                ps.setBoolean(11, Boolean.TRUE.equals(m.getRegistrationFeePaid()));
+                ps.setBoolean(12, Boolean.TRUE.equals(m.getMembershipDuesPaid()));
+                ps.addBatch();
             }
-            var executedRow = preparedStatement.executeBatch();
-            for (int i = 0; i < executedRow.length; i++) {
-                Member member = members.get(i);
-
-                attachCollectivityMember(member);
-                attachRefereeMember(member);
-
-                memberList.add(findById(member.getId()).orElseThrow());
+            ps.executeBatch();
+            for (Member m : members) {
+                if (m.getCollectivities() != null) {
+                    for (Collectivity c : m.getCollectivities()) {
+                        collectivityMemberRepository.attach(c, m);
+                    }
+                }
+                if (m.getReferees() != null) {
+                    for (Member ref : m.getReferees()) {
+                        memberRefereeRepository.attach(ref, m);
+                    }
+                }
+                result.add(findById(m.getId()).orElseThrow());
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return memberList;
-    }
-
-    private void attachRefereeMember(Member member) {
-        List<Member> referees = member.getReferees();
-        for (Member referee : referees) {
-            memberRefereeRepository.attachMemberReferee(referee, member);
-        }
-    }
-
-    private void attachCollectivityMember(Member member) {
-        List<Collectivity> collectivities = member.getCollectivities();
-        for (Collectivity collectivity : collectivities) {
-            collectivityMemberRepository.attachMemberToCollectivity(collectivity, member);
-        }
+        return result;
     }
 
     public Optional<Member> findById(String id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select member.id, first_name, last_name, birth_date, gender, phone_number, email, address, profession, occupation,registration_fee_paid, membership_dues_paid
-                from "member"
-                where id = ?
-                """)) {
-            preparedStatement.setString(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                var member = memberMapper.mapFromResultSet(resultSet);
-                member.setReferees(findRefereesByIdMember(member.getId()));
-                return Optional.of(member);
+        String sql = """
+                SELECT id, first_name, last_name, birth_date, gender, phone_number,
+                       email, address, profession, occupation, registration_fee_paid, membership_dues_paid
+                FROM "member" WHERE id = ?
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Member m = memberMapper.mapFromResultSet(rs);
+                m.setReferees(findRefereesByMemberId(m.getId()));
+                return Optional.of(m);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -115,44 +96,47 @@ public class MemberRepository {
     }
 
     public List<Member> findAllByCollectivity(Collectivity collectivity) {
-        List<Member> memberList = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select member.id, first_name, last_name, birth_date, gender, phone_number, email, address, profession, occupation,registration_fee_paid, membership_dues_paid
-                from "member"
-                    join collectivity_member on member.id = collectivity_member.member_id
-                    join collectivity on collectivity.id = collectivity_member.collectivity_id
-                where collectivity_member.collectivity_id = ?
-                """)) {
-            preparedStatement.setString(1, collectivity.getId());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                var memberMapped = memberMapper.mapFromResultSet(resultSet);
-                memberMapped.setReferees(findRefereesByIdMember(memberMapped.getId()));
-                memberMapped.addCollectivity(collectivity);
-                memberList.add(memberMapped);
+        String sql = """
+                SELECT m.id, m.first_name, m.last_name, m.birth_date, m.gender,
+                       m.phone_number, m.email, m.address, m.profession, m.occupation,
+                       m.registration_fee_paid, m.membership_dues_paid
+                FROM "member" m
+                JOIN collectivity_member cm ON m.id = cm.member_id
+                WHERE cm.collectivity_id = ?
+                """;
+        List<Member> list = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, collectivity.getId());
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Member m = memberMapper.mapFromResultSet(rs);
+                m.setReferees(findRefereesByMemberId(m.getId()));
+                m.addCollectivity(collectivity);
+                list.add(m);
             }
-            return memberList;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return list;
     }
 
-    private List<Member> findRefereesByIdMember(String idMember) {
-        List<Member> memberList = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select member.id, first_name, last_name, birth_date, gender, phone_number, email, address, profession, occupation,registration_fee_paid, membership_dues_paid
-                from "member"
-                    join member_referee on member.id = member_referee.member_referee_id
-                where member_referee.member_refereed_id = ?
-                """)) {
-            preparedStatement.setString(1, idMember);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                memberList.add(memberMapper.mapFromResultSet(resultSet));
-            }
-            return memberList;
+    private List<Member> findRefereesByMemberId(String memberId) {
+        String sql = """
+                SELECT m.id, m.first_name, m.last_name, m.birth_date, m.gender,
+                       m.phone_number, m.email, m.address, m.profession, m.occupation,
+                       m.registration_fee_paid, m.membership_dues_paid
+                FROM "member" m
+                JOIN member_referee mr ON m.id = mr.member_referee_id
+                WHERE mr.member_refereed_id = ?
+                """;
+        List<Member> list = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, memberId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(memberMapper.mapFromResultSet(rs));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+        return list;
     }
 }

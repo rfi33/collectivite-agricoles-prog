@@ -1,133 +1,130 @@
 package com.collectivity.service;
 
-
 import com.collectivity.entity.*;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
-import com.collectivity.repository.CollectivityRepository;
-import com.collectivity.repository.FinancialAccountRepository;
-import com.collectivity.repository.MembershipFeeRepository;
+import com.collectivity.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.UUID;
 
 import static com.collectivity.entity.ActivityStatus.ACTIVE;
-import static com.collectivity.entity.PaymentMode.*;
-import static java.util.UUID.randomUUID;
 
 @Service
 @RequiredArgsConstructor
 public class CollectivityService {
+
     private final CollectivityRepository collectivityRepository;
     private final MembershipFeeRepository membershipFeeRepository;
     private final FinancialAccountRepository financialAccountRepository;
+    private final TransactionRepository transactionRepository;
+    private final MemberRepository memberRepository;
+
+    public Collectivity getCollectivityById(String id) {
+        return collectivityRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Collectivity.id=" + id + " not found"));
+    }
 
     public List<Collectivity> createCollectivities(List<Collectivity> collectivities) {
-        for (Collectivity collectivity : collectivities) {
-            if (!collectivity.hasEnoughMembers()) {
-                throw new BadRequestException("Collectivity must have at least 10 members, otherwise actual is " + collectivity.getMembers().size());
+        for (Collectivity c : collectivities) {
+            if (!c.hasEnoughMembers()) {
+                throw new BadRequestException(
+                        "Collectivity must have at least 10 members, got " + (c.getMembers() == null ? 0 : c.getMembers().size()));
             }
-            collectivity.setId(randomUUID().toString());
+            if (!Boolean.TRUE.equals(c.getFederationApproval())) {
+                throw new BadRequestException("Collectivity must have federation approval");
+            }
+            if (c.getId() == null) c.setId(UUID.randomUUID().toString());
         }
         return collectivityRepository.saveAll(collectivities);
     }
 
-    public Collectivity getCollectivityById(String id) {
-        return collectivityRepository.findById(id).orElseThrow(() -> new NotFoundException("Collectivity.id= " + id + " not found"));
-    }
-
-    public Collectivity updateInformations(String collectivityId, String actualName, Integer actualNumber) {
-        Collectivity collectivity = collectivityRepository.findById(collectivityId)
-                .orElseThrow(() -> new NotFoundException("Collectivity.id= " + collectivityId + " not found"));
-        if (actualNumber != null && collectivityRepository.isNumberExists(actualNumber)) {
-            throw new BadRequestException("Collectivity.number=" + actualNumber + " already exists");
+    public Collectivity updateInformations(String id, String name, Integer number) {
+        Collectivity c = collectivityRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Collectivity.id=" + id + " not found"));
+        if (name != null && collectivityRepository.isNameExists(name)) {
+            throw new BadRequestException("Collectivity.name=" + name + " already exists");
         }
-        if (actualName != null && collectivityRepository.isNameExists(actualName)) {
-            throw new BadRequestException("Collectivity.name=" + actualName + " already exists");
+        if (number != null && collectivityRepository.isNumberExists(number)) {
+            throw new BadRequestException("Collectivity.number=" + number + " already exists");
         }
-        collectivity.setName(actualName);
-        collectivity.setNumber(actualNumber);
-        return collectivityRepository.saveAll(List.of((collectivity))).getFirst();
+        c.setName(name);
+        c.setNumber(number);
+        return collectivityRepository.saveAll(List.of(c)).getFirst();
     }
 
-    public List<MembershipFee> getMembershipFeesByCollectivityIdentifier(String collectivityIdentifier) {
-        Collectivity collectivity = collectivityRepository.findById(collectivityIdentifier)
-                .orElseThrow(() ->
-                        new NotFoundException("Collectivity.id= " + collectivityIdentifier + " not found"));
-
-        return membershipFeeRepository.getMembershipFeesByCollectivityId(collectivity.getId());
+    public List<MembershipFee> getMembershipFeesByCollectivityId(String collectivityId) {
+        getCollectivityById(collectivityId);
+        return membershipFeeRepository.findByCollectivityId(collectivityId);
     }
 
-    public List<MembershipFee> createMembershipFees(String collectivityIdentifier, List<MembershipFee> membershipFees) {
-        Collectivity collectivity = collectivityRepository.findById(collectivityIdentifier)
-                .orElseThrow(() ->
-                        new NotFoundException("Collectivity.id= " + collectivityIdentifier + " not found"));
-        for (MembershipFee membershipFee : membershipFees) {
-            membershipFee.setId(randomUUID().toString());
-            membershipFee.setStatus(ACTIVE);
-            membershipFee.setCollectivityOwner(collectivity);
+    public List<MembershipFee> createMembershipFees(String collectivityId, List<MembershipFee> fees) {
+        getCollectivityById(collectivityId);
+        for (MembershipFee f : fees) {
+            f.setId(UUID.randomUUID().toString());
+            f.setStatus(ACTIVE);
+            f.setCollectivityId(collectivityId);
         }
-        return membershipFeeRepository.saveAll(membershipFees);
+        return membershipFeeRepository.saveAll(fees);
     }
 
-    public List<FinancialAccount> getFinancialAccounts(String collectivityIdentifier) {
-        Collectivity collectivity = collectivityRepository.findById(collectivityIdentifier)
-                .orElseThrow(() ->
-                        new NotFoundException("Collectivity.id= " + collectivityIdentifier + " not found"));
-
-        CashAccount cashAccount = financialAccountRepository.getCashAccountByCollectivityId(collectivity.getId());
-        List<BankAccount> bankAccounts = financialAccountRepository.getBankAccountsByCollectivityId(collectivity.getId());
-        List<MobileBankingAccount> mobileBankingAccountsByCollectivityId = financialAccountRepository.getMobileBankingAccountsByCollectivityId(collectivity.getId());
-
-        return Stream.concat(
-                Stream.concat(
-                        Stream.of(cashAccount),
-                        bankAccounts.stream()),
-                mobileBankingAccountsByCollectivityId.stream()
-        ).toList();
+    public List<FinancialAccount> getFinancialAccounts(String collectivityId) {
+        getCollectivityById(collectivityId);
+        return financialAccountRepository.findByCollectivityId(collectivityId);
     }
 
-    public List<CollectivityTransaction> getTransactionsByCollectivity(String collectivityIdentifier, LocalDate from, LocalDate to) {
-        List<FinancialAccount> financialAccounts = getFinancialAccounts(collectivityIdentifier);
-
-        return financialAccounts.stream()
-                .map(financialAccount -> {
-                    var transactionList = financialAccount.getTransactions().stream()
-                            .filter(transaction -> (transaction.getCreationDate().isAfter(from) || transaction.getCreationDate().equals(from))
-                                    && (transaction.getCreationDate().isBefore(to) || transaction.getCreationDate().equals(to)))
-                            .toList();
-                    var paymentMode = getPaymentMode(financialAccount);
-                    return transactionList.stream()
-                            .map(transaction -> {
-                                CollectivityTransaction collectivityTransaction = CollectivityTransaction.builder()
-                                        .id(transaction.getId())
-                                        .type(transaction.getType())
-                                        .amount(transaction.getAmount())
-                                        .creationDate(transaction.getCreationDate())
-                                        .accountCredited(financialAccount)
-                                        .paymentMode(paymentMode)
-                                        .memberDebited(transaction.getMemberDebited())
-                                        .build();
-                                return collectivityTransaction;
-                            })
-                            .toList();
-                })
-                .flatMap(List::stream)
-                .toList();
+    public List<CollectivityTransaction> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
+        getCollectivityById(collectivityId);
+        return transactionRepository.findByCollectivityAndPeriod(collectivityId, from, to);
     }
 
-    private PaymentMode getPaymentMode(FinancialAccount financialAccount) {
-        PaymentMode paymentMode;
-        paymentMode = switch (financialAccount) {
-            case BankAccount ignored -> BANK_TRANSFER;
-            case MobileBankingAccount ignored -> MOBILE_BANKING;
-            case CashAccount ignored -> CASH;
-            default ->
-                    throw new IllegalArgumentException("Unknown financial account type " + financialAccount.getClass().getTypeName());
-        };
-        return paymentMode;
+    public List<MemberPayment> createMemberPayments(String memberId, List<CreateMemberPaymentRequest> requests) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NotFoundException("Member.id=" + memberId + " not found"));
+
+        return requests.stream().map(req -> {
+            FinancialAccount account = financialAccountRepository.findById(req.getAccountCreditedIdentifier())
+                    .orElseThrow(() -> new NotFoundException(
+                            "FinancialAccount.id=" + req.getAccountCreditedIdentifier() + " not found"));
+
+            BigDecimal amount = BigDecimal.valueOf(req.getAmount());
+            LocalDate now = LocalDate.now();
+
+            CollectivityTransaction tx = CollectivityTransaction.builder()
+                    .id(UUID.randomUUID().toString())
+                    .creationDate(now)
+                    .amount(amount)
+                    .paymentMode(req.getPaymentMode())
+                    .accountCredited(account)
+                    .memberDebited(member)
+                    .build();
+            transactionRepository.save(tx);
+
+            double newAmount = (account.getAmount() == null ? BigDecimal.ZERO : account.getAmount())
+                    .add(amount).doubleValue();
+            financialAccountRepository.updateAmount(account.getId(), newAmount);
+
+            return MemberPayment.builder()
+                    .id(tx.getId())
+                    .amount(amount)
+                    .paymentMode(req.getPaymentMode())
+                    .accountCredited(account)
+                    .creationDate(now)
+                    .build();
+        }).toList();
+    }
+
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class CreateMemberPaymentRequest {
+        private Integer amount;
+        private String membershipFeeIdentifier;
+        private String accountCreditedIdentifier;
+        private PaymentMode paymentMode;
     }
 }

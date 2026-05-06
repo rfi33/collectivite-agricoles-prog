@@ -6,8 +6,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static edu.hei.school.agricultural.entity.MemberOccupation.JUNIOR;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -30,33 +28,26 @@ public class Member {
     private Boolean membershipDuesPaid;
 
     public boolean refereesAreEligible() {
-        if (referees == null || referees.isEmpty()) {
-            return false;
-        }
-        var memberRefereesInsideActualCollectivityNotJuniorCount = referees.stream().filter(member ->
-                        member.getCollectivities() != null
-                        && member.getCollectivities().stream()
-                                .anyMatch(collectivity -> collectivities.contains(collectivity) && !JUNIOR.equals(member.getOccupation())))
+        if (referees == null || referees.size() < 2) return false;
+        if (collectivities == null || collectivities.isEmpty()) return false;
+        long eligible = referees.stream()
+                .filter(r -> r.getOccupation() != MemberOccupation.JUNIOR
+                        && r.getCollectivities() != null
+                        && r.getCollectivities().stream()
+                                .anyMatch(rc -> collectivities.contains(rc)))
                 .count();
-        return memberRefereesInsideActualCollectivityNotJuniorCount >= 2;
+        return eligible >= 2;
     }
 
     public List<Collectivity> addCollectivity(Collectivity collectivity) {
-        if (collectivities == null) {
-            collectivities = new ArrayList<>();
-        }
-        collectivities.add(collectivity);
+        if (collectivities == null) collectivities = new ArrayList<>();
+        if (!collectivities.contains(collectivity)) collectivities.add(collectivity);
         return collectivities;
     }
 
-    public List<Member> addReferees(List<Member> refereeMembers) {
-        if (referees == null) {
-            referees = new ArrayList<>();
-        }
-
-        referees.addAll(refereeMembers);
-
+    public List<Member> addReferees(List<Member> refs) {
+        if (referees == null) referees = new ArrayList<>();
+        referees.addAll(refs);
         return referees;
     }
-
 }

@@ -1,14 +1,12 @@
 package com.collectivity.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
+@Setter
 public class CollectivityStructure {
     private Member president;
     private Member vicePresident;

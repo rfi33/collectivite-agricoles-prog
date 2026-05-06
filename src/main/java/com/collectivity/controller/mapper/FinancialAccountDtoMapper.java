@@ -1,40 +1,38 @@
 package com.collectivity.controller.mapper;
 
-import com.collectivity.entity.*;
+import com.collectivity.controller.dto.*;
+import com.collectivity.entity.FinancialAccount;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-
 @Component
-public class FinancialAccountDtoMapper<financialAccount> {
-    public FinancialAccount mapToDto(financialAccount, LocalDate at) {
-        LocalDate balanceAt = at == null ? LocalDate.now() : at;
-        if (financialAccount instanceof CashAccount cashAccount) {
-            return edu.hei.school.agricultural.controller.dto.CashAccount.builder()
-                    .id(cashAccount.getId())
-                    .amount(cashAccount.getBalanceAt(balanceAt))
-                    .build();
-        } else if (financialAccount instanceof BankAccount bankAccount) {
-            return edu.hei.school.agricultural.controller.dto.BankAccount.builder()
-                    .id(bankAccount.getId())
-                    .holderName(bankAccount.getHolderName())
-                    .bankName(bankAccount.getBankName() == null ? null : Bank.valueOf(bankAccount.getBankName().name()))
-                    .bankCode(bankAccount.getBankCode())
-                    .bankBranchCode(bankAccount.getBranchCode())
-                    .bankAccountNumber(bankAccount.getAccountNumber())
-                    .bankAccountKey(bankAccount.getAccountKey())
-                    .amount(bankAccount.getBalanceAt(balanceAt))
-                    .build();
-        } else if (financialAccount instanceof MobileBankingAccount mobileBankingAccount) {
-            return edu.hei.school.agricultural.controller.dto.MobileBankingAccount.builder()
-                    .id(mobileBankingAccount.getId())
-                    .holderName(mobileBankingAccount.getHolderName())
-                    .mobileNumber(mobileBankingAccount.getMobileNumber())
-                    .mobileBankingService(mobileBankingAccount.getMobileBankingService() == null ? null : MobileBankingService.valueOf(mobileBankingAccount.getMobileBankingService().name()))
-                    .amount(mobileBankingAccount.getBalanceAt(balanceAt))
-                    .build();
-        }
-        throw new IllegalArgumentException("Unknown financial account type " + financialAccount.getClass().getName());
-    }
+public class FinancialAccountDtoMapper {
 
+    public FinancialAccountDto mapToDto(FinancialAccount fa) {
+        if (fa == null) return null;
+        return switch (fa.getAccountType()) {
+            case "CASH" -> CashAccountDto.builder()
+                    .id(fa.getId())
+                    .amount(fa.getAmount() == null ? 0.0 : fa.getAmount().doubleValue())
+                    .build();
+            case "MOBILE_BANKING" -> MobileBankingAccountDto.builder()
+                    .id(fa.getId())
+                    .holderName(fa.getHolderName())
+                    .mobileNumber(fa.getMobileNumber())
+                    .mobileBankingService(fa.getMobileMoney() == null ? null
+                            : MobileBankingService.valueOf(fa.getMobileMoney()))
+                    .amount(fa.getAmount() == null ? 0.0 : fa.getAmount().doubleValue())
+                    .build();
+            case "BANK" -> BankAccountDto.builder()
+                    .id(fa.getId())
+                    .holderName(fa.getHolderName())
+                    .bankName(fa.getBankName() == null ? null : Bank.valueOf(fa.getBankName()))
+                    .bankCode(fa.getBankCode())
+                    .bankBranchCode(fa.getBankBranchCode())
+                    .bankAccountNumber(fa.getBankAccountNumber())
+                    .bankAccountKey(fa.getBankAccountKey())
+                    .amount(fa.getAmount() == null ? 0.0 : fa.getAmount().doubleValue())
+                    .build();
+            default -> throw new IllegalArgumentException("Unknown account type: " + fa.getAccountType());
+        };
+    }
 }

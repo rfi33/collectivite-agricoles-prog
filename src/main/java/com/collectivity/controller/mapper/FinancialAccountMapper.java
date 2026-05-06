@@ -1,4 +1,4 @@
-package com.collectivity.mapper;
+package com.collectivity.controller.mapper;
 
 import com.collectivity.entity.FinancialAccount;
 import org.springframework.stereotype.Component;

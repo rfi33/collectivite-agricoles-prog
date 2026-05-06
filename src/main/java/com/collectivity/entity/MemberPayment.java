@@ -10,11 +10,10 @@ import java.time.LocalDate;
 @Builder
 @Getter
 @Setter
-public class CollectivityTransaction {
+public class MemberPayment {
     private String id;
-    private LocalDate creationDate;
     private BigDecimal amount;
     private PaymentMode paymentMode;
     private FinancialAccount accountCredited;
-    private Member memberDebited;
+    private LocalDate creationDate;
 }

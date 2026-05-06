@@ -18,111 +18,75 @@ public class CollectivityRepository {
     private final CollectivityMapper collectivityMapper;
 
     public List<Collectivity> saveAll(List<Collectivity> collectivities) {
-        List<Collectivity> memberList = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement(
-                """
-                        insert into "collectivity" (id, name, number, location, president_id, vice_president_id, treasurer_id, secretary_id) 
-                        values (?, ?, ?, ?, ?, ?, ?, ?) 
-                        on conflict (id) do update set name = excluded.name,
-                                                       number = excluded.number,
-                                                       location = excluded.location,
-                                                       president_id = excluded.president_id,
-                                                       treasurer_id = excluded.treasurer_id,
-                                                       secretary_id = excluded.secretary_id 
-                        """)) {
-            for (Collectivity collectivity : collectivities) {
-                CollectivityStructure collectivityStructure = collectivity.getCollectivityStructure();
-                preparedStatement.setString(1, collectivity.getId());
-                preparedStatement.setString(2, collectivity.getName());
-                Integer number = collectivity.getNumber();
-                if (number == null) {
-                    preparedStatement.setNull(3, Types.INTEGER);
-                } else {
-                    preparedStatement.setInt(3, number);
-                }
-                preparedStatement.setObject(4, collectivity.getLocation());
-                preparedStatement.setString(5, collectivityStructure.getPresident().getId());
-                preparedStatement.setString(6, collectivityStructure.getVicePresident().getId());
-                preparedStatement.setString(7, collectivityStructure.getTreasurer().getId());
-                preparedStatement.setString(8, collectivityStructure.getSecretary().getId());
-                preparedStatement.addBatch();
+        String sql = """
+                INSERT INTO "collectivity"
+                    (id, name, number, location, president_id, vice_president_id, treasurer_id, secretary_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (id) DO UPDATE SET
+                    name              = excluded.name,
+                    number            = excluded.number,
+                    location          = excluded.location,
+                    president_id      = excluded.president_id,
+                    vice_president_id = excluded.vice_president_id,
+                    treasurer_id      = excluded.treasurer_id,
+                    secretary_id      = excluded.secretary_id
+                """;
+        List<Collectivity> result = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (Collectivity c : collectivities) {
+                CollectivityStructure s = c.getCollectivityStructure();
+                ps.setString(1, c.getId());
+                ps.setString(2, c.getName());
+                if (c.getNumber() == null) ps.setNull(3, Types.INTEGER);
+                else ps.setInt(3, c.getNumber());
+                ps.setString(4, c.getLocation());
+                ps.setString(5, s.getPresident().getId());
+                ps.setString(6, s.getVicePresident().getId());
+                ps.setString(7, s.getTreasurer().getId());
+                ps.setString(8, s.getSecretary().getId());
+                ps.addBatch();
             }
-            var executedRow = preparedStatement.executeBatch();
-            for (int i = 0; i < executedRow.length; i++) {
-                memberList.add(findById(collectivities.get(i).getId()).orElseThrow());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return memberList;
-    }
-
-
-    public boolean isNumberExists(Integer number) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select id
-                from "collectivity"
-                where number = ?
-                """)) {
-            preparedStatement.setInt(1, number);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return true;
+            ps.executeBatch();
+            for (Collectivity c : collectivities) {
+                result.add(findById(c.getId()).orElseThrow());
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return false;
-    }
-
-    public boolean isNameExists(String name) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select id
-                from "collectivity"
-                where name = ?
-                """)) {
-            preparedStatement.setString(1, name);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return true;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return false;
+        return result;
     }
 
     public Optional<Collectivity> findById(String id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select id, name, number, location, president_id, vice_president_id, treasurer_id, secretary_id
-                from "collectivity"
-                where id = ?
-                """)) {
-            preparedStatement.setString(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return Optional.of(collectivityMapper.mapFromResultSet(resultSet));
-            }
+        String sql = """
+                SELECT id, name, number, location,
+                       president_id, vice_president_id, treasurer_id, secretary_id
+                FROM "collectivity" WHERE id = ?
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return Optional.of(collectivityMapper.mapFromResultSet(rs));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
         return Optional.empty();
     }
 
-    public List<Collectivity> findAllByMemberId(String memberId) {
-        List<Collectivity> collectivities = new ArrayList<>();
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select id, name, number, location, president_id, vice_president_id, treasurer_id, secretary_id
-                from "collectivity" 
-                join "collectivity_member" on collectivity.id = collectivity_member.collectivity_id
-                where collectivity_member.member_id = ?
-                """)) {
-            preparedStatement.setString(1, memberId);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                collectivities.add(collectivityMapper.mapFromResultSet(resultSet));
-            }
-            return collectivities;
+    public boolean isNumberExists(Integer number) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT id FROM \"collectivity\" WHERE number = ?")) {
+            ps.setInt(1, number);
+            return ps.executeQuery().next();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean isNameExists(String name) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT id FROM \"collectivity\" WHERE name = ?")) {
+            ps.setString(1, name);
+            return ps.executeQuery().next();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

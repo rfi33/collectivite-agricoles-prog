@@ -1,81 +1,76 @@
 package com.collectivity.controller.mapper;
 
-i
-import com.collectivity.controller.dto.CreateMember;
+import com.collectivity.controller.dto.*;
+import com.collectivity.entity.*;
 import com.collectivity.entity.Collectivity;
-import com.collectivity.entity.Gender;
-import com.collectivity.entity.Member;
-import com.collectivity.entity.MemberOccupation;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
 import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Member;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 public class MemberDtoMapper {
+
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository memberRepository;
 
-    public Member mapToEntity(CreateMember createMemberDto) {
-        Optional<Collectivity> optionalCollectivity = collectivityRepository.findById(createMemberDto.getCollectivityIdentifier());
+    public Member mapToEntity(CreateMemberDto dto) {
+        Collectivity collectivity = collectivityRepository.findById(dto.getCollectivityIdentifier())
+                .orElseThrow(() -> new NotFoundException(
+                        "Collectivity.id=" + dto.getCollectivityIdentifier() + " not found"));
 
-        if (optionalCollectivity.isEmpty()) {
-            throw new NotFoundException("Collectivity.id=" + createMemberDto.getCollectivityIdentifier() + " not found");
-        }
+        List<Member> referees = dto.getReferees() == null ? List.of() :
+                dto.getReferees().stream()
+                        .map(refId -> {
+                            Member ref = memberRepository.findById(refId)
+                                    .orElseThrow(() -> new NotFoundException("Member.id=" + refId + " not found"));
+                            ref.addCollectivity(collectivity);
+                            return ref;
+                        })
+                        .toList();
 
-        var refereeMembers = createMemberDto.getReferees().stream()
-                .map(refereeId -> {
-                    var memberReferee = memberRepository.findById(refereeId).orElseThrow(
-                            () -> new NotFoundException("Member.id=" + refereeId + "not found"));
-                    memberReferee.addCollectivity(optionalCollectivity.get());
-                    return memberReferee;
-                })
-                .toList();
-
-        var member = Member.builder()
-                .firstName(createMemberDto.getFirstName())
-                .lastName(createMemberDto.getLastName())
-                .birthDate(createMemberDto.getBirthDate())
-                .gender(createMemberDto.getGender() == null ? null : Gender.valueOf(createMemberDto.getGender().name()))
-                .occupation(createMemberDto.getOccupation() == null ? null : edu.hei.school.agricultural.entity.MemberOccupation.valueOf(createMemberDto.getOccupation().name()))
-                .address(createMemberDto.getAddress())
-                .profession(createMemberDto.getProfession())
-                .phoneNumber(createMemberDto.getPhoneNumber())
-                .email(createMemberDto.getEmail())
-                .registrationFeePaid(createMemberDto.getRegistrationFeePaid())
-                .membershipDuesPaid(createMemberDto.getMembershipDuesPaid())
+        Member member = Member.builder()
+                .firstName(dto.getFirstName())
+                .lastName(dto.getLastName())
+                .birthDate(dto.getBirthDate())
+                .gender(dto.getGender() == null ? null : Gender.valueOf(dto.getGender().name()))
+                .occupation(dto.getOccupation() == null ? null
+                        : MemberOccupation.valueOf(dto.getOccupation().name()))
+                .address(dto.getAddress())
+                .profession(dto.getProfession())
+                .phoneNumber(dto.getPhoneNumber() == null ? null : String.valueOf(dto.getPhoneNumber()))
+                .email(dto.getEmail())
+                .registrationFeePaid(dto.getRegistrationFeePaid())
+                .membershipDuesPaid(dto.getMembershipDuesPaid())
                 .build();
 
-        member.addCollectivity(optionalCollectivity.get());
-        member.addReferees(refereeMembers);
-
+        member.addCollectivity(collectivity);
+        member.addReferees(referees);
         return member;
     }
 
-    public edu.hei.school.agricultural.controller.dto.Member mapToDto(Member member) {
-        if (member == null) {
-            return null;
-        }
-        return edu.hei.school.agricultural.controller.dto.Member.builder()
-                .id(member.getId())
-                .firstName(member.getFirstName())
-                .lastName(member.getLastName())
-                .birthDate(member.getBirthDate())
-                .address(member.getAddress())
-                .profession(member.getProfession())
-                .phoneNumber(member.getPhoneNumber())
-                .profession(member.getProfession())
-                .email(member.getEmail())
-                .gender(member.getGender() == null ? null : edu.hei.school.agricultural.controller.dto.Gender.valueOf(member.getGender().name()))
-                .occupation(member.getOccupation() == null ? null : MemberOccupation.valueOf(member.getOccupation().name()))
-                .referees(member.getReferees() == null ? List.of() : member.getReferees().stream()
-                        .map(this::mapToDto)
-                        .toList())
+    public MemberDto mapToDto(Member m) {
+        if (m == null) return null;
+        return MemberDto.builder()
+                .id(m.getId())
+                .firstName(m.getFirstName())
+                .lastName(m.getLastName())
+                .birthDate(m.getBirthDate())
+                .address(m.getAddress())
+                .profession(m.getProfession())
+                .phoneNumber(m.getPhoneNumber())
+                .email(m.getEmail())
+                .gender(m.getGender() == null ? null
+                        : com.collectivity.controller.dto.Gender.valueOf(m.getGender().name()))
+                .occupation(m.getOccupation() == null ? null
+                        : com.collectivity.controller.dto.MemberOccupation.valueOf(m.getOccupation().name()))
+                .referees(m.getReferees() == null ? List.of()
+                        : m.getReferees().stream().map(this::mapToDto).toList())
                 .build();
     }
 }

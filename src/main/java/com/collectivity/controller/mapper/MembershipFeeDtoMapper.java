@@ -1,32 +1,32 @@
 package com.collectivity.controller.mapper;
 
-import com.collectivity.controller.dto.CreateMembershipFee;
-import com.collectivity.entity.ActivityStatus;
-import com.collectivity.entity.Frequency;
+import com.collectivity.controller.dto.*;
 import com.collectivity.entity.MembershipFee;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class MembershipFeeDtoMapper {
-    public MembershipFee mapToDto(edu.hei.school.agricultural.entity.MembershipFee membershipFee) {
-        return MembershipFee.builder()
-                .id(membershipFee.getId())
-                .label(membershipFee.getLabel())
-                .amount(membershipFee.getAmount())
-                .frequency(membershipFee.getFrequency() == null ? null : Frequency.valueOf(membershipFee.getFrequency().name()))
-                .status(membershipFee.getStatus() == null ? null : ActivityStatus.valueOf(membershipFee.getStatus().name()))
-                .eligibleFrom(membershipFee.getEligibleFrom())
+
+    public MembershipFeeDto mapToDto(MembershipFee f) {
+        return MembershipFeeDto.builder()
+                .id(f.getId())
+                .label(f.getLabel())
+                .amount(f.getAmount())
+                .eligibleFrom(f.getEligibleFrom())
+                .frequency(f.getFrequency() == null ? null
+                        : Frequency.valueOf(f.getFrequency().name()))
+                .status(f.getStatus() == null ? null
+                        : ActivityStatus.valueOf(f.getStatus().name()))
                 .build();
     }
 
-    public edu.hei.school.agricultural.entity.MembershipFee mapToEntity(CreateMembershipFee createMembershipFee) {
-        return edu.hei.school.agricultural.entity.MembershipFee.builder()
-                .label(createMembershipFee.getLabel())
-                .amount(createMembershipFee.getAmount())
-                .frequency(createMembershipFee.getFrequency() == null ? null : edu.hei.school.agricultural.entity.Frequency.valueOf(createMembershipFee.getFrequency().name()))
-                .eligibleFrom(createMembershipFee.getEligibleFrom())
+    public MembershipFee mapToEntity(CreateMembershipFeeDto dto) {
+        return MembershipFee.builder()
+                .label(dto.getLabel())
+                .amount(dto.getAmount())
+                .eligibleFrom(dto.getEligibleFrom())
+                .frequency(dto.getFrequency() == null ? null
+                        : com.collectivity.entity.Frequency.valueOf(dto.getFrequency().name()))
                 .build();
     }
 }

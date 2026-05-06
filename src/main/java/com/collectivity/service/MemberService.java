@@ -7,27 +7,27 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static java.util.UUID.randomUUID;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class MemberService {
+
     private final MemberRepository memberRepository;
 
-    public List<Member> addNewMembers(List<Member> memberList) {
-        for (Member member : memberList) {
-            if (!member.refereesAreEligible()) {
-                throw new BadRequestException("Member.id=" + member.getId() + " member referees are not eligible");
+    public List<Member> addNewMembers(List<Member> members) {
+        for (Member m : members) {
+            if (Boolean.FALSE.equals(m.getRegistrationFeePaid())) {
+                throw new BadRequestException("Registration fee not paid for member " + m.getFirstName());
             }
-            if (!member.getMembershipDuesPaid()) {
-                throw new BadRequestException("Member.id=" + member.getId() + " membership dues not paid");
+            if (Boolean.FALSE.equals(m.getMembershipDuesPaid())) {
+                throw new BadRequestException("Membership dues not paid for member " + m.getFirstName());
             }
-            if (!member.getRegistrationFeePaid()) {
-                throw new BadRequestException("Member.id=" + member.getId() + " membership fees not paid");
+            if (!m.refereesAreEligible()) {
+                throw new BadRequestException("Referees are not eligible for member " + m.getFirstName());
             }
-            member.setId(randomUUID().toString());
+            m.setId(UUID.randomUUID().toString());
         }
-        return memberRepository.saveAll(memberList);
+        return memberRepository.saveAll(members);
     }
 }
