@@ -1,4 +1,4 @@
-package com.collectivity.controller.mapper;
+package com.collectivity.mapper;
 
 import edu.hei.school.agricultural.controller.dto.CreateCollectivity;
 import edu.hei.school.agricultural.controller.dto.CreateCollectivityStructure;

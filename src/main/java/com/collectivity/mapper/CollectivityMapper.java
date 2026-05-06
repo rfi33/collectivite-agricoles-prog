@@ -1,8 +1,8 @@
 package com.collectivity.mapper;
 
-import edu.hei.school.agricultural.entity.Collectivity;
-import edu.hei.school.agricultural.entity.CollectivityStructure;
-import edu.hei.school.agricultural.repository.MemberRepository;
+import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.CollectivityStructure;
+import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,17 +14,22 @@ import java.sql.SQLException;
 public class CollectivityMapper {
     private final MemberRepository memberRepository;
 
-    public Collectivity mapFromResultSet(ResultSet resultSet) throws SQLException {
-        var collectivity = Collectivity.builder()
-                .id(resultSet.getString("id"))
-                .name(resultSet.getString("name"))
-                .number(resultSet.getInt("number"))
-                .location(resultSet.getString("location"))
+    public Collectivity mapFromResultSet(ResultSet rs) throws SQLException {
+        String presidentId     = rs.getString("president_id");
+        String vpId            = rs.getString("vice_president_id");
+        String treasurerId     = rs.getString("treasurer_id");
+        String secretaryId     = rs.getString("secretary_id");
+
+        Collectivity collectivity = Collectivity.builder()
+                .id(rs.getString("id"))
+                .name(rs.getString("name"))
+                .number(rs.getObject("number") == null ? null : rs.getInt("number"))
+                .location(rs.getString("location"))
                 .collectivityStructure(CollectivityStructure.builder()
-                        .president(resultSet.getString("president_id") == null ? null : memberRepository.findById(resultSet.getString("president_id")).orElse(null))
-                        .vicePresident(resultSet.getString("vice_president_id") == null ? null : memberRepository.findById(resultSet.getString("vice_president_id")).orElse(null))
-                        .treasurer(resultSet.getString("treasurer_id") == null ? null : memberRepository.findById(resultSet.getString("treasurer_id")).orElse(null))
-                        .secretary(resultSet.getString("secretary_id") == null ? null : memberRepository.findById(resultSet.getString("secretary_id")).orElse(null))
+                        .president(presidentId == null ? null : memberRepository.findById(presidentId).orElse(null))
+                        .vicePresident(vpId == null ? null : memberRepository.findById(vpId).orElse(null))
+                        .treasurer(treasurerId == null ? null : memberRepository.findById(treasurerId).orElse(null))
+                        .secretary(secretaryId == null ? null : memberRepository.findById(secretaryId).orElse(null))
                         .build())
                 .build();
         collectivity.addMembers(memberRepository.findAllByCollectivity(collectivity));
