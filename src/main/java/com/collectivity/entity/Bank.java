@@ -1,4 +1,4 @@
-package edu.hei.school.agricultural.controller.dto;
+package com.collectivity.entity;
 
 public enum Bank {
     BRED,

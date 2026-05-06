@@ -1,4 +1,4 @@
-package com.collectivity.controller.dto;
+package edu.hei.school.agricultural.controller.dto;
 
 public enum PaymentMode {
     CASH,

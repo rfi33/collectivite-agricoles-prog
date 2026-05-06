@@ -1,25 +1,37 @@
 package com.collectivity.entity;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+
+@Data
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Getter
-@Setter
+@EqualsAndHashCode
 public class FinancialAccount {
-    private String id;
-    private String collectivityId;
-    private String accountType;
-    private BigDecimal amount;
-    private String holderName;
-    private String bankName;
-    private Integer bankCode;
-    private Integer bankBranchCode;
-    private Long bankAccountNumber;
-    private Integer bankAccountKey;
-    private String mobileMoney;
-    private Long mobileNumber;
+    protected String id;
+    protected List<Transaction> transactions;
+
+    public List<Transaction> addTransactions(List<Transaction> newTransactions) {
+        if (this.transactions == null) {
+            this.transactions = new ArrayList<>();
+        }
+        this.transactions.addAll(newTransactions);
+        return this.transactions;
+    }
+
+    public Double getBalanceAt(LocalDate at) {
+        return transactions.stream()
+                .filter(transaction -> !transaction.getCreationDate().isAfter(at))
+                .map(Transaction::getAmount)
+                .reduce(0.0, Double::sum);
+    }
 }

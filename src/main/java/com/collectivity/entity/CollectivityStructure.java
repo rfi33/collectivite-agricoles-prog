@@ -1,4 +1,4 @@
-package com.collectivity.entity;
+package edu.hei.school.agricultural.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

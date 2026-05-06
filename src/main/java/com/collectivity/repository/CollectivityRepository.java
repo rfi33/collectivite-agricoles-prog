@@ -1,4 +1,4 @@
-package com.collectivity.repository;
+package edu.hei.school.agricultural.repository;
 
 import edu.hei.school.agricultural.entity.Collectivity;
 import edu.hei.school.agricultural.entity.CollectivityStructure;

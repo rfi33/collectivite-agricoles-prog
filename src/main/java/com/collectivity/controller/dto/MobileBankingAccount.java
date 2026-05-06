@@ -1,6 +1,10 @@
-package com.collectivity.controller.dto;
+package edu.hei.school.agricultural.controller.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -11,6 +15,6 @@ public class MobileBankingAccount implements FinancialAccount {
     private String id;
     private String holderName;
     private MobileBankingService mobileBankingService;
-    private Integer mobileNumber;
+    private String mobileNumber;
     private Double amount;
 }

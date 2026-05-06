@@ -1,4 +1,4 @@
-package com.collectivity.controller.dto;
+package edu.hei.school.agricultural.controller.dto;
 
 import java.util.List;
 
