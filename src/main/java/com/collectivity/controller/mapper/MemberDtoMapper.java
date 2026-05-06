@@ -1,4 +1,4 @@
-package edu.hei.school.agricultural.controller.mapper;
+package com.collectivity.controller.mapper;
 
 import edu.hei.school.agricultural.controller.dto.CreateMember;
 import edu.hei.school.agricultural.controller.dto.MemberOccupation;

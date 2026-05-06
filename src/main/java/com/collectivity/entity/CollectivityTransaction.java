@@ -7,5 +7,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
-public class CashAccount extends FinancialAccount {
+public class CollectivityTransaction extends Transaction {
+    private PaymentMode paymentMode;
+    private FinancialAccount accountCredited;
 }

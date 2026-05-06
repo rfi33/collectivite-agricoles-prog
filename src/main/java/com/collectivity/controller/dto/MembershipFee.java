@@ -1,4 +1,4 @@
-package edu.hei.school.agricultural.controller.dto;
+package com.collectivity.controller.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

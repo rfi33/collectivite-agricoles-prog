@@ -1,4 +1,4 @@
-package edu.hei.school.agricultural.mapper;
+package com.collectivity.mapper;
 
 import edu.hei.school.agricultural.entity.Gender;
 import edu.hei.school.agricultural.entity.Member;

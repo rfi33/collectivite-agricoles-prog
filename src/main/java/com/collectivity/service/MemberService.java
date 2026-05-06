@@ -1,4 +1,4 @@
-package edu.hei.school.agricultural.service;
+package com.collectivity.service;
 
 import edu.hei.school.agricultural.entity.Member;
 import edu.hei.school.agricultural.exception.BadRequestException;
