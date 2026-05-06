@@ -1,0 +1,80 @@
+package com.collectivity.controller;
+
+import com.collectivity.controller.dto.CollectivityLocalStatistics;
+import com.collectivity.controller.dto.CollectivityOverallStatistics;
+import com.collectivity.exception.BadRequestException;
+import com.collectivity.exception.NotFoundException;
+import com.collectivity.service.StatisticsService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.OK;
+
+@RestController
+@RequiredArgsConstructor
+public class StatisticsController {
+
+    private final StatisticsService statisticsService;
+
+    /**
+     * Endpoint G : GET /collectivites/{id}/statistics
+     *
+     * Retourne pour chaque membre de la collectivité sur la période [from, to] :
+     * - earnedAmount  : montant total réellement encaissé par la collectivité de ce membre
+     * - unpaidAmount  : montant potentiellement impayé (cotisations ACTIVES dues - encaissé),
+     *                   minimum 0 (jamais négatif)
+     *
+     * Seules les cotisations avec status = ACTIVE sont prises en compte pour unpaidAmount.
+     */
+    @GetMapping("/collectivites/{id}/statistics")
+    public ResponseEntity<?> getLocalStatistics(
+            @PathVariable String id,
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to) {
+        try {
+            List<CollectivityLocalStatistics> stats =
+                    statisticsService.getLocalStatistics(id, from, to);
+            return ResponseEntity.status(OK).body(stats);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(BAD_REQUEST).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint H : GET /collectivites/statistics
+     *
+     * Retourne pour chaque collectivité sur la période [from, to] :
+     * - newMembersNumber                  : nombre de nouveaux adhérents
+     * - overallMemberCurrentDuePercentage : % de membres à jour dans leurs cotisations ACTIVES
+     *
+     * Une cotisation INACTIVE n'impacte pas le pourcentage.
+     */
+    @GetMapping("/collectivites/statistics")
+    public ResponseEntity<?> getOverallStatistics(
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to) {
+        try {
+            List<CollectivityOverallStatistics> stats =
+                    statisticsService.getOverallStatistics(from, to);
+            return ResponseEntity.status(OK).body(stats);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+}
