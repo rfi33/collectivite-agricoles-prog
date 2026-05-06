@@ -1,27 +1,40 @@
 package com.collectivity.entity;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@AllArgsConstructor
 @NoArgsConstructor
-@Getter @Setter @ToString @EqualsAndHashCode
+@AllArgsConstructor
+@Builder
+@Data
 public class Collectivity {
-    public String         id;
-    public String         name;
-    public Integer        number;
-    public String         location;
-    public Specialization specialization;
-    public boolean        federationApproval;
-    public Member         president;
-    public Member         vicePresident;
-    public Member         treasurer;
-    public Member         secretary;
-    public List<Member>   members;
+    private String id;
+    private String name;
+    private Integer number;
+    private String location;
+    private String specialization;
+    private CollectivityStructure collectivityStructure;
+    private List<Member> members;
+    private Boolean federationApproval;
+
+    public boolean hasEnoughMembers() {
+        return members.size() >= 10;
+    }
+
+    public List<Member> addMembers(List<Member> newMembers) {
+        if(members == null){
+            members = new ArrayList<>();
+        }
+        for (Member member : newMembers) {
+            member.getCollectivities().add(this);
+        }
+        members.addAll(newMembers);
+
+        return members;
+    }
 }
