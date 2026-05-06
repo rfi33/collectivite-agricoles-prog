@@ -1,7 +1,6 @@
 package com.collectivity.mapper;
 
-import edu.hei.school.agricultural.entity.*;
-import org.springframework.stereotype.Component;
+import com.collectivity.entity.*;import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

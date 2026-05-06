@@ -1,8 +1,12 @@
 package com.collectivity.repository;
 
-import edu.hei.school.agricultural.entity.*;
-import edu.hei.school.agricultural.exception.InternalServerErrorException;
-import edu.hei.school.agricultural.mapper.FinancialAccountMapper;
+import com.collectivity.controller.dto.BankAccount;
+import com.collectivity.entity.CashAccount;
+import com.collectivity.entity.Member;
+import com.collectivity.entity.MobileBankingAccount;
+import com.collectivity.entity.Transaction;
+import com.collectivity.exception.InternalServerErrorException;
+import com.collectivity.mapper.FinancialAccountMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

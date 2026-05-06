@@ -1,7 +1,7 @@
 package com.collectivity.repository;
 
-import edu.hei.school.agricultural.entity.MembershipFee;
-import edu.hei.school.agricultural.mapper.MembershipFeeMapper;
+import com.collectivity.entity.MembershipFee;
+import com.collectivity.mapper.MembershipFeeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

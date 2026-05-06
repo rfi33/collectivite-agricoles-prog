@@ -1,11 +1,11 @@
 package com.collectivity.controller;
 
-import edu.hei.school.agricultural.controller.dto.CreateMember;
-import edu.hei.school.agricultural.controller.mapper.MemberDtoMapper;
-import edu.hei.school.agricultural.entity.Member;
-import edu.hei.school.agricultural.exception.BadRequestException;
-import edu.hei.school.agricultural.exception.NotFoundException;
-import edu.hei.school.agricultural.service.MemberService;
+import com.collectivity.controller.dto.CreateMember;
+import com.collectivity.controller.mapper.MemberDtoMapper;
+import com.collectivity.entity.Member;
+import com.collectivity.exception.BadRequestException;
+import com.collectivity.exception.NotFoundException;
+import com.collectivity.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,9 +1,6 @@
 package com.collectivity.mapper;
 
-import edu.hei.school.agricultural.entity.ActivityStatus;
-import edu.hei.school.agricultural.entity.Frequency;
-import edu.hei.school.agricultural.entity.MembershipFee;
-import org.springframework.stereotype.Component;
+import com.collectivity.entity.ActivityStatus;import com.collectivity.entity.Frequency;import com.collectivity.entity.MembershipFee;import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

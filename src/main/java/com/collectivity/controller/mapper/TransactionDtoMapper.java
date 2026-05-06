@@ -1,7 +1,7 @@
 package com.collectivity.controller.mapper;
 
-import edu.hei.school.agricultural.controller.dto.CollectivityTransaction;
-import edu.hei.school.agricultural.controller.dto.PaymentMode;
+import com.collectivity.entity.CollectivityTransaction;
+import com.collectivity.entity.PaymentMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

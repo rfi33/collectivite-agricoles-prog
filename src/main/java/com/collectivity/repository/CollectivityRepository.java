@@ -1,8 +1,8 @@
 package com.collectivity.repository;
 
-import edu.hei.school.agricultural.entity.Collectivity;
-import edu.hei.school.agricultural.entity.CollectivityStructure;
-import edu.hei.school.agricultural.mapper.CollectivityMapper;
+import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.CollectivityStructure;
+import com.collectivity.mapper.CollectivityMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

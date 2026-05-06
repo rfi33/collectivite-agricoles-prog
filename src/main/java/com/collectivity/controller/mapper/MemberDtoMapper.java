@@ -1,13 +1,14 @@
 package com.collectivity.controller.mapper;
 
-import edu.hei.school.agricultural.controller.dto.CreateMember;
-import edu.hei.school.agricultural.controller.dto.MemberOccupation;
-import edu.hei.school.agricultural.entity.Collectivity;
-import edu.hei.school.agricultural.entity.Gender;
-import edu.hei.school.agricultural.entity.Member;
-import edu.hei.school.agricultural.exception.NotFoundException;
-import edu.hei.school.agricultural.repository.CollectivityRepository;
-import edu.hei.school.agricultural.repository.MemberRepository;
+i
+import com.collectivity.controller.dto.CreateMember;
+import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.Gender;
+import com.collectivity.entity.Member;
+import com.collectivity.entity.MemberOccupation;
+import com.collectivity.exception.NotFoundException;
+import com.collectivity.repository.CollectivityRepository;
+import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

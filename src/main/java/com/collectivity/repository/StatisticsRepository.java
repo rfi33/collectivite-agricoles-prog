@@ -20,44 +20,9 @@ import java.util.List;
 public class StatisticsRepository {
 
     private final Connection connection;
-
-    /**
-     * Endpoint G — GET /collectivites/{id}/statistics
-     *
-     * Push-down processing : tout le calcul est réalisé directement en SQL.
-     *
-     * Pour chaque membre actif de la collectivité sur la période [from, to] :
-     *
-     * - earnedAmount : somme réelle des transactions du membre vers cette collectivité
-     *   sur la période (depuis collectivities_transactions).
-     *
-     * - unpaidAmount : pour chaque cotisation ACTIVE de la collectivité dont eligible_from
-     *   est <= to, on calcule le montant théoriquement dû sur la période selon la fréquence,
-     *   puis on soustrait ce que le membre a réellement payé.
-     *   Si le résultat est négatif (membre en avance), on renvoie 0.
-     *
-     * Seules les cotisations avec status = 'ACTIVE' sont prises en compte.
-     * Une cotisation INACTIVE est ignorée des deux calculs.
-     */
     public List<CollectivityLocalStatistics> getLocalStatistics(
             String collectivityId, LocalDate from, LocalDate to) {
 
-        /*
-         * Calcul push-down en deux étapes :
-         *
-         * Étape 1 — earnedAmount par membre :
-         *   On agrège directement via SUM dans collectivities_transactions
-         *   en filtrant sur collectivity_id et la période.
-         *
-         * Étape 2 — montant total dû sur la période (cotisations ACTIVES) :
-         *   On récupère toutes les cotisations ACTIVES de la collectivité
-         *   dont eligible_from <= to, puis on calcule le nombre d'occurrences
-         *   selon la fréquence sur [max(from, eligible_from), to].
-         *   Ce montant est identique pour tous les membres (c'est une règle collective).
-         *   unpaidAmount = max(0, totalDue - earnedAmount).
-         */
-
-        // --- Étape 1 : earnedAmount par membre (push-down SUM) ---
         String earnedSql = """
                 SELECT
                     m.id              AS member_id,
@@ -78,7 +43,6 @@ public class StatisticsRepository {
                 ORDER BY m.last_name, m.first_name
                 """;
 
-        // --- Étape 2 : montant total dû (cotisations ACTIVES, push-down filtre status) ---
         String dueSql = """
                 SELECT amount, frequency, eligible_from
                 FROM membership_fee
@@ -87,7 +51,6 @@ public class StatisticsRepository {
                   AND eligible_from <= ?
                 """;
 
-        // Calcul du montant dû total pour la collectivité (même valeur pour chaque membre)
         double totalDue = 0.0;
         try (PreparedStatement duePs = connection.prepareStatement(dueSql)) {
             duePs.setString(1, collectivityId);
@@ -103,7 +66,6 @@ public class StatisticsRepository {
             throw new RuntimeException("Erreur calcul cotisations dues", e);
         }
 
-        // Construction de la liste des statistiques par membre
         List<CollectivityLocalStatistics> result = new ArrayList<>();
         try (PreparedStatement earnedPs = connection.prepareStatement(earnedSql)) {
             earnedPs.setString(1, collectivityId);
@@ -137,39 +99,12 @@ public class StatisticsRepository {
         return result;
     }
 
-    /**
-     * Endpoint H — GET /collectivites/statistics
-     *
-     * Push-down processing : tout le calcul est réalisé directement en SQL.
-     *
-     * Pour chaque collectivité sur la période [from, to] :
-     *
-     * - newMembersNumber : COUNT des membres dont la date d'adhésion (collectivity_member.join_date)
-     *   tombe dans la période.
-     *
-     * - overallMemberCurrentDuePercentage : pourcentage de membres dont le total payé
-     *   sur la période >= montant total dû (cotisations ACTIVES uniquement).
-     *   Si une cotisation est INACTIVE, elle n'est pas comptée dans le montant dû,
-     *   donc elle n'impacte pas négativement le pourcentage.
-     */
     public List<CollectivityOverallStatistics> getOverallStatistics(
             LocalDate from, LocalDate to) {
 
-        /*
-         * Calcul push-down en trois requêtes :
-         *
-         * Requête A — nouveaux adhérents : COUNT sur collectivity_member.join_date dans [from, to].
-         *
-         * Requête B — paiements réels : SUM(amount) de collectivities_transactions
-         *   sur la période, groupé par (collectivity_id, member_id).
-         *
-         * Requête C — cotisations ACTIVES : amount + frequency + eligible_from par collectivité,
-         *   pour calculer le montant dû collectivité par collectivité.
-         *
-         * Le % à jour est calculé en Java à partir des données agrégées déjà remontées.
-         */
 
-        // Requête A : nouveaux adhérents par collectivité (push-down COUNT + filter join_date)
+
+
         String newMembersSql = """
                 SELECT
                     c.id     AS collectivity_id,
@@ -184,7 +119,7 @@ public class StatisticsRepository {
                 ORDER BY c.name
                 """;
 
-        // Requête B : montant payé par (collectivité, membre) sur la période (push-down SUM)
+
         String paidSql = """
                 SELECT
                     collectivity_id,
@@ -195,7 +130,6 @@ public class StatisticsRepository {
                 GROUP BY collectivity_id, member_id
                 """;
 
-        // Requête C : cotisations ACTIVES par collectivité (push-down filtre status = 'ACTIVE')
         String activeFeesSql = """
                 SELECT collectivity_id, amount, frequency, eligible_from
                 FROM membership_fee
@@ -203,7 +137,6 @@ public class StatisticsRepository {
                   AND eligible_from <= ?
                 """;
 
-        // --- Chargement des paiements (Map collectivityId -> Map memberId -> paidAmount) ---
         java.util.Map<String, java.util.Map<String, Double>> paidByCollAndMember = new java.util.HashMap<>();
         try (PreparedStatement ps = connection.prepareStatement(paidSql)) {
             ps.setDate(1, java.sql.Date.valueOf(from));
@@ -221,7 +154,6 @@ public class StatisticsRepository {
             throw new RuntimeException("Erreur chargement paiements", e);
         }
 
-        // --- Calcul du montant dû par collectivité (Map collectivityId -> totalDue) ---
         java.util.Map<String, Double> dueByColl = new java.util.HashMap<>();
         try (PreparedStatement ps = connection.prepareStatement(activeFeesSql)) {
             ps.setDate(1, java.sql.Date.valueOf(to));
@@ -238,7 +170,6 @@ public class StatisticsRepository {
             throw new RuntimeException("Erreur chargement cotisations actives", e);
         }
 
-        // --- Construction du résultat (push-down nouveaux membres + agrégation %) ---
         List<CollectivityOverallStatistics> result = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(newMembersSql)) {
             ps.setDate(1, java.sql.Date.valueOf(from));
@@ -252,12 +183,9 @@ public class StatisticsRepository {
 
                 double totalDue = dueByColl.getOrDefault(collId, 0.0);
 
-                // Membres de cette collectivité ayant au moins un enregistrement de paiement
                 java.util.Map<String, Double> memberPayments =
                         paidByCollAndMember.getOrDefault(collId, java.util.Collections.emptyMap());
 
-                // Calcul du % membres à jour :
-                // un membre est à jour si paid >= totalDue (ou si totalDue == 0 : pas de cotisation active)
                 long totalMembersWithPayments = memberPayments.size();
                 long upToDateMembers = totalMembersWithPayments == 0 ? 0L :
                         memberPayments.values().stream()
@@ -285,16 +213,10 @@ public class StatisticsRepository {
         return result;
     }
 
-    // -------------------------------------------------------------------------
-    // Helper : nombre d'occurrences d'une cotisation sur la période [from, to]
-    // selon sa fréquence, multiplié par le montant unitaire.
-    // Push-down logic : appelé après récupération des données déjà filtrées depuis la DB.
-    // -------------------------------------------------------------------------
-
     private double computeOccurrencesOnPeriod(double feeAmount, String frequency,
                                                LocalDate eligibleFrom,
                                                LocalDate from, LocalDate to) {
-        // La cotisation ne commence à courir qu'à partir de eligible_from
+
         LocalDate effectiveStart = eligibleFrom.isAfter(from) ? eligibleFrom : from;
         if (effectiveStart.isAfter(to)) {
             return 0.0;

@@ -1,9 +1,9 @@
 package com.collectivity.controller.mapper;
 
-import edu.hei.school.agricultural.controller.dto.ActivityStatus;
-import edu.hei.school.agricultural.controller.dto.CreateMembershipFee;
-import edu.hei.school.agricultural.controller.dto.Frequency;
-import edu.hei.school.agricultural.controller.dto.MembershipFee;
+import com.collectivity.controller.dto.CreateMembershipFee;
+import com.collectivity.entity.ActivityStatus;
+import com.collectivity.entity.Frequency;
+import com.collectivity.entity.MembershipFee;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

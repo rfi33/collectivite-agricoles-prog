@@ -1,8 +1,8 @@
 package com.collectivity.service;
 
-import edu.hei.school.agricultural.entity.Member;
-import edu.hei.school.agricultural.exception.BadRequestException;
-import edu.hei.school.agricultural.repository.MemberRepository;
+import com.collectivity.entity.Member;
+import com.collectivity.exception.BadRequestException;
+import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

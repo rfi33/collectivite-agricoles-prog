@@ -1,18 +1,13 @@
 package com.collectivity.controller.mapper;
 
-import edu.hei.school.agricultural.controller.dto.Bank;
-import edu.hei.school.agricultural.controller.dto.FinancialAccount;
-import edu.hei.school.agricultural.controller.dto.MobileBankingService;
-import edu.hei.school.agricultural.entity.BankAccount;
-import edu.hei.school.agricultural.entity.CashAccount;
-import edu.hei.school.agricultural.entity.MobileBankingAccount;
+import com.collectivity.entity.*;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
 @Component
-public class FinancialAccountDtoMapper {
-    public FinancialAccount mapToDto(edu.hei.school.agricultural.entity.FinancialAccount financialAccount, LocalDate at) {
+public class FinancialAccountDtoMapper<financialAccount> {
+    public FinancialAccount mapToDto(financialAccount, LocalDate at) {
         LocalDate balanceAt = at == null ? LocalDate.now() : at;
         if (financialAccount instanceof CashAccount cashAccount) {
             return edu.hei.school.agricultural.controller.dto.CashAccount.builder()

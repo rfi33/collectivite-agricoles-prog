@@ -1,11 +1,12 @@
 package com.collectivity.service;
 
-import edu.hei.school.agricultural.entity.*;
-import edu.hei.school.agricultural.exception.BadRequestException;
-import edu.hei.school.agricultural.exception.NotFoundException;
-import edu.hei.school.agricultural.repository.CollectivityRepository;
-import edu.hei.school.agricultural.repository.FinancialAccountRepository;
-import edu.hei.school.agricultural.repository.MembershipFeeRepository;
+
+import com.collectivity.entity.*;
+import com.collectivity.exception.BadRequestException;
+import com.collectivity.exception.NotFoundException;
+import com.collectivity.repository.CollectivityRepository;
+import com.collectivity.repository.FinancialAccountRepository;
+import com.collectivity.repository.MembershipFeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +14,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static edu.hei.school.agricultural.entity.ActivityStatus.ACTIVE;
-import static edu.hei.school.agricultural.entity.PaymentMode.*;
+import static com.collectivity.entity.ActivityStatus.ACTIVE;
+import static com.collectivity.entity.PaymentMode.*;
 import static java.util.UUID.randomUUID;
 
 @Service

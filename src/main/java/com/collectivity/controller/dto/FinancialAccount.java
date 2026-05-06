@@ -3,10 +3,6 @@ package com.collectivity.controller.dto;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-/**
- * Represents a financial account. Maps to the OAS3 'oneOf' definition between
- * CashAccount, MobileBankingAccount, and BankAccount.
- */
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,

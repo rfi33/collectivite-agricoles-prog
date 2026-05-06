@@ -1,9 +1,7 @@
 package com.collectivity.mapper;
 
-import edu.hei.school.agricultural.entity.Collectivity;
-import edu.hei.school.agricultural.entity.CollectivityStructure;
-import edu.hei.school.agricultural.repository.MemberRepository;
-import lombok.RequiredArgsConstructor;
+import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.CollectivityStructure;import com.collectivity.repository.MemberRepository;import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;

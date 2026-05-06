@@ -26,16 +26,7 @@ public class StatisticsController {
 
     private final StatisticsService statisticsService;
 
-    /**
-     * Endpoint G : GET /collectivites/{id}/statistics
-     *
-     * Retourne pour chaque membre de la collectivité sur la période [from, to] :
-     * - earnedAmount  : montant total réellement encaissé par la collectivité de ce membre
-     * - unpaidAmount  : montant potentiellement impayé (cotisations ACTIVES dues - encaissé),
-     *                   minimum 0 (jamais négatif)
-     *
-     * Seules les cotisations avec status = ACTIVE sont prises en compte pour unpaidAmount.
-     */
+
     @GetMapping("/collectivites/{id}/statistics")
     public ResponseEntity<?> getLocalStatistics(
             @PathVariable String id,
@@ -54,15 +45,6 @@ public class StatisticsController {
         }
     }
 
-    /**
-     * Endpoint H : GET /collectivites/statistics
-     *
-     * Retourne pour chaque collectivité sur la période [from, to] :
-     * - newMembersNumber                  : nombre de nouveaux adhérents
-     * - overallMemberCurrentDuePercentage : % de membres à jour dans leurs cotisations ACTIVES
-     *
-     * Une cotisation INACTIVE n'impacte pas le pourcentage.
-     */
     @GetMapping("/collectivites/statistics")
     public ResponseEntity<?> getOverallStatistics(
             @RequestParam LocalDate from,
