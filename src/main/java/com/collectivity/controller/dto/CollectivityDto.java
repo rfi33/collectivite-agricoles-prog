@@ -5,7 +5,10 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
-@Data @SuperBuilder @NoArgsConstructor @AllArgsConstructor
+@Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class CollectivityDto extends CollectivityInformationDto {
     private String id;

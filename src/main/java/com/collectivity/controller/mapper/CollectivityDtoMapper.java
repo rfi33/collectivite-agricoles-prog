@@ -1,7 +1,9 @@
 package com.collectivity.controller.mapper;
 
 import com.collectivity.controller.dto.*;
-import com.collectivity.entity.*;
+import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.CollectivityStructure;
+import com.collectivity.entity.Member;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;

@@ -1,15 +1,16 @@
 package com.collectivity.controller.mapper;
 
 import com.collectivity.controller.dto.*;
-import com.collectivity.entity.*;
 import com.collectivity.entity.Collectivity;
+import com.collectivity.entity.Gender;
+import com.collectivity.entity.Member;
+import com.collectivity.entity.MemberOccupation;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
 import com.collectivity.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Member;
 import java.util.List;
 
 @Component
@@ -43,7 +44,7 @@ public class MemberDtoMapper {
                         : MemberOccupation.valueOf(dto.getOccupation().name()))
                 .address(dto.getAddress())
                 .profession(dto.getProfession())
-                .phoneNumber(dto.getPhoneNumber() == null ? null : String.valueOf(dto.getPhoneNumber()))
+                .phoneNumber(dto.getPhoneNumber())
                 .email(dto.getEmail())
                 .registrationFeePaid(dto.getRegistrationFeePaid())
                 .membershipDuesPaid(dto.getMembershipDuesPaid())
