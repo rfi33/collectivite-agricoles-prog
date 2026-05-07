@@ -1,6 +1,9 @@
 package edu.hei.school.agricultural.entity;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
@@ -8,13 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
-@ToString(exclude = "transactions")
-@EqualsAndHashCode(exclude = "transactions")
+@EqualsAndHashCode
 public class FinancialAccount {
     protected String id;
     protected List<Transaction> transactions;

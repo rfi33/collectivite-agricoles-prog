@@ -10,12 +10,10 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-import static java.time.LocalDate.now;
-
 @Component
 public class FinancialAccountDtoMapper {
     public FinancialAccount mapToDto(edu.hei.school.agricultural.entity.FinancialAccount financialAccount, LocalDate at) {
-        LocalDate balanceAt = at == null ? now() : at;
+        LocalDate balanceAt = at == null ? LocalDate.now() : at;
         if (financialAccount instanceof CashAccount cashAccount) {
             return edu.hei.school.agricultural.controller.dto.CashAccount.builder()
                     .id(cashAccount.getId())
@@ -42,10 +40,6 @@ public class FinancialAccountDtoMapper {
                     .build();
         }
         throw new IllegalArgumentException("Unknown financial account type " + financialAccount.getClass().getName());
-    }
-
-    public FinancialAccount mapToDto(edu.hei.school.agricultural.entity.FinancialAccount financialAccount) {
-        return  mapToDto(financialAccount, now());
     }
 
 }
