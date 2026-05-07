@@ -17,6 +17,10 @@ public class StatisticsController {
     
     private final StatisticsService statisticsService;
 
+    /**
+     * Endpoint pour les statistiques des membres par collectivité.
+     * Exemple d'appel : GET /api/statistics/collectivity/{id}?from=2024-01-01&to=2024-12-31
+     */
     @GetMapping("/collectivity/{collectivityId}")
     public ResponseEntity<List<Map<String, Object>>> getMemberStats(
             @PathVariable String collectivityId,
@@ -29,6 +33,10 @@ public class StatisticsController {
         return ResponseEntity.ok(stats);
     }
 
+    /**
+     * Endpoint pour les statistiques globales de toutes les collectivités.
+     * Exemple d'appel : GET /api/statistics/overall?from=2024-01-01&to=2024-12-31
+     */
     @GetMapping("/overall")
     public ResponseEntity<List<Map<String, Object>>> getOverallStats(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
