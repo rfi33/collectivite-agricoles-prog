@@ -4,6 +4,7 @@ import edu.hei.school.agricultural.controller.dto.CollectivityInformation;
 import edu.hei.school.agricultural.controller.dto.CollectivityLocalStatistics;
 import edu.hei.school.agricultural.controller.dto.CollectivityOverallStatistics;
 import edu.hei.school.agricultural.controller.dto.MemberDescription;
+import edu.hei.school.agricultural.service.AttendanceStatisticsService.MemberIdWithOccupation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +19,8 @@ import java.util.List;
 public class StatisticsService {
 
     private final DataSource dataSource;
+    private final AttendanceStatisticsService attendanceStatisticsService;
 
-    /**
-     * GET /collectivites/{id}/statistics
-     * Retourne le montant encaissé et le montant impayé potentiel par membre actif
-     * sur une période donnée, conformément au YAML v0.0.5/v0.0.6.
-     */
     public List<CollectivityLocalStatistics> getMemberStatsByCollectivityAndPeriod(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -82,18 +79,26 @@ public class StatisticsService {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
+                String memberId   = rs.getString("member_id");
+                String occupation = rs.getString("occupation");
+
                 MemberDescription memberDescription = MemberDescription.builder()
-                        .id(rs.getString("member_id"))
+                        .id(memberId)
                         .firstName(rs.getString("first_name"))
                         .lastName(rs.getString("last_name"))
                         .email(rs.getString("email"))
-                        .occupation(rs.getString("occupation"))
+                        .occupation(occupation)
                         .build();
+
+
+                Double assiduityPercentage = attendanceStatisticsService
+                        .getMemberAssiduityPercentage(collectivityId, memberId, occupation);
 
                 results.add(CollectivityLocalStatistics.builder()
                         .memberDescription(memberDescription)
                         .earnedAmount(rs.getDouble("earned_amount"))
                         .unpaidAmount(rs.getDouble("unpaid_amount"))
+                        .assiduityPercentage(assiduityPercentage)
                         .build());
             }
         } catch (SQLException e) {
@@ -103,11 +108,6 @@ public class StatisticsService {
         return results;
     }
 
-    /**
-     * GET /collectivites/statistics
-     * Retourne le pourcentage global des membres à jour et le nombre de nouveaux adhérents
-     * par collectivité sur une période donnée, conformément au YAML v0.0.5/v0.0.6.
-     */
     public List<CollectivityOverallStatistics> getOverallStatisticsForAllCollectivities(
             LocalDate from, LocalDate to) {
 
@@ -180,6 +180,13 @@ public class StatisticsService {
                 ORDER BY cb.name
                 """;
 
+        String membersSql = """
+                SELECT m.id, m.occupation
+                FROM member m
+                JOIN collectivity_member cm ON cm.member_id = m.id
+                WHERE cm.collectivity_id = ?
+                """;
+
         List<CollectivityOverallStatistics> results = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
@@ -193,15 +200,25 @@ public class StatisticsService {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
+                String collectivityId = rs.getString("collectivity_id");
+
                 CollectivityInformation collectivityInformation = CollectivityInformation.builder()
                         .name(rs.getString("name"))
                         .number(rs.getInt("number") == 0 && rs.wasNull() ? null : rs.getInt("number"))
                         .build();
 
+                List<MemberIdWithOccupation> membersOfCollectivity =
+                        getMembersOfCollectivity(conn, membersSql, collectivityId);
+
+                Double overallAssiduity = attendanceStatisticsService
+                        .getCollectivityOverallAssiduityPercentage(collectivityId, membersOfCollectivity);
+
                 results.add(CollectivityOverallStatistics.builder()
                         .collectivityInformation(collectivityInformation)
                         .newMembersNumber(rs.getInt("new_members_number"))
-                        .overallMemberCurrentDuePercentage(rs.getDouble("overall_member_current_due_percentage"))
+                        .overallMemberCurrentDuePercentage(
+                                rs.getDouble("overall_member_current_due_percentage"))
+                        .overallMemberAssiduityPercentage(overallAssiduity)
                         .build());
             }
         } catch (SQLException e) {
@@ -209,5 +226,21 @@ public class StatisticsService {
         }
 
         return results;
+    }
+
+    private List<MemberIdWithOccupation> getMembersOfCollectivity(
+            Connection conn, String sql, String collectivityId) throws SQLException {
+
+        List<MemberIdWithOccupation> members = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, collectivityId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                members.add(new MemberIdWithOccupation(
+                        rs.getString("id"),
+                        rs.getString("occupation")));
+            }
+        }
+        return members;
     }
 }

@@ -20,10 +20,6 @@ public class CollectivityActivityService {
     private final CollectivityActivityRepository activityRepository;
     private final CollectivityActivityMapper activityMapper;
 
-    /**
-     * POST /collectivities/{id}/activities
-     * Erreur 400 si recurrenceRule ET executiveDate sont fournis ensemble.
-     */
     public List<CollectivityActivityDTO> addActivities(
             String collectivityId,
             List<CreateCollectivityActivityDTO> activities) {
@@ -48,19 +44,12 @@ public class CollectivityActivityService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * GET /collectivities/{id}/activities
-     */
     public List<CollectivityActivityDTO> getActivities(String collectivityId) {
         return activityRepository.findByCollectivityId(collectivityId).stream()
                 .map(activityMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Utilisé en interne pour vérifier que l'activité appartient bien à la collectivité.
-     * Utilise NotFoundException (RuntimeException) au lieu de ResourceNotFoundException (Throwable).
-     */
     public CollectivityActivity getActivityById(String collectivityId, String activityId) {
         if (!activityRepository.existsByIdAndCollectivityId(activityId, collectivityId)) {
             throw new NotFoundException(
