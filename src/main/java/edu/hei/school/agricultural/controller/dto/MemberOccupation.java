@@ -6,5 +6,6 @@ public enum MemberOccupation {
     SECRETARY,
     TREASURER,
     VICE_PRESIDENT,
-    PRESIDENT
+    PRESIDENT,
+    CONFIRMED
 }
