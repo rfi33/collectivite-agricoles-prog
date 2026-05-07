@@ -6,7 +6,11 @@ info:
 
 servers:
   - url: 'http://localhost:8080'
+<<<<<<< HEAD
   tags:
+=======
+tags:
+>>>>>>> correction
   - name: Collectivités
     description: Gestion des collectivités (création, modification, suppression, autorisation)
   - name: Mandats
