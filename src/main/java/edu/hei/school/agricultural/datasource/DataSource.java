@@ -1,5 +1,6 @@
 package edu.hei.school.agricultural.datasource;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,15 +11,19 @@ import java.sql.SQLException;
 @Configuration
 public class DataSource {
 
+    private final Dotenv dotenv = Dotenv.load();
+
     @Bean
     public Connection getConnection() {
         try {
-            String jdbcURl = "jdbc:postgresql://localhost:5432/agricultural_federation_api";
-            String user = "postgres";
-            String password = "postgres";
-            return DriverManager.getConnection(jdbcURl, user, password);
+            String jdbcUrl = dotenv.get("DB_URL");
+            String user = dotenv.get("DB_USER");
+            String password = dotenv.get("DB_PASSWORD");
+
+            return DriverManager.getConnection(jdbcUrl, user, password);
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Database connection failed", e);
         }
     }
 }
