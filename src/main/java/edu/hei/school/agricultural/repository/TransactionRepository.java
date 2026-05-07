@@ -1,7 +1,6 @@
 package edu.hei.school.agricultural.repository;
 
-import edu.hei.school.agricultural.entity.Member;
-import edu.hei.school.agricultural.entity.Transaction;
+import edu.hei.school.agricultural.entity.*;
 import edu.hei.school.agricultural.mapper.FinancialAccountMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -19,13 +18,13 @@ public class TransactionRepository {
     private final FinancialAccountMapper financialAccountMapper;
     private final FinancialAccountRepository financialAccountRepository;
 
-    public List<Transaction> saveAll(List<Transaction> transactionList) {
-        List<Transaction> savedTransactions = new ArrayList<Transaction>();
+    public List<CollectivityTransaction> saveAll(List<CollectivityTransaction> transactionList) {
+        List<CollectivityTransaction> savedTransactions = new ArrayList<>();
         try (PreparedStatement preparedStatement = connection.prepareStatement("""
                 insert into "transaction" (id, amount, creation_date, transaction_type, financial_account_id, member_debited_id)
                 values (?, ?, ?, ?::transaction_type, ?, ?)
                 """)) {
-            for (Transaction transaction : transactionList) {
+            for (CollectivityTransaction transaction : transactionList) {
                 preparedStatement.setString(1, transaction.getId());
                 preparedStatement.setDouble(2, transaction.getAmount());
                 preparedStatement.setDate(3, Date.valueOf(transaction.getCreationDate()));
@@ -36,8 +35,7 @@ public class TransactionRepository {
             }
             var executedBatch = preparedStatement.executeBatch();
             for (int i = 0; i < executedBatch.length; i++) {
-                Transaction transaction = transactionList.get(i);
-                savedTransactions.add(findById(transaction.getId()).orElseThrow());
+                savedTransactions.add(findById(transactionList.get(i).getId()).orElseThrow());
             }
             return savedTransactions;
         } catch (SQLException e) {
@@ -45,22 +43,63 @@ public class TransactionRepository {
         }
     }
 
-    private Optional<Transaction> findById(String id) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                select id, amount, creation_date, transaction_type, member_debited_id, financial_account_id from "transaction"
-                where id=?
+    public List<CollectivityTransaction> findByCollectivityIdAndPeriod(String collectivityId, java.time.LocalDate from, java.time.LocalDate to) {
+        List<CollectivityTransaction> transactions = new ArrayList<>();
+        try (PreparedStatement ps = connection.prepareStatement("""
+                select t.id, t.amount, t.creation_date, t.transaction_type, t.financial_account_id, t.member_debited_id
+                from "transaction" t
+                where t.financial_account_id in (
+                    select id from cash_account where collectivity_id = ?
+                    union all
+                    select id from bank_account where collectivity_id = ?
+                    union all
+                    select id from mobile_banking_account where collectivity_id = ?
+                )
+                and t.creation_date between ? and ?
                 """)) {
-            preparedStatement.setString(1, id);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    Member memberDebited = memberRepository.findById(resultSet.getString("member_debited_id")).orElseThrow();
-                    Transaction transaction = financialAccountMapper.mapTransactionFromResultSet(resultSet, memberDebited);
-                    return Optional.of(transaction);
+            ps.setString(1, collectivityId);
+            ps.setString(2, collectivityId);
+            ps.setString(3, collectivityId);
+            ps.setDate(4, Date.valueOf(from));
+            ps.setDate(5, Date.valueOf(to));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                transactions.add(mapFromResultSet(rs));
+            }
+            return transactions;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Optional<CollectivityTransaction> findById(String id) {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                select id, amount, creation_date, transaction_type, financial_account_id, member_debited_id
+                from "transaction" where id = ?
+                """)) {
+            ps.setString(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapFromResultSet(rs));
                 }
             }
             return Optional.empty();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private CollectivityTransaction mapFromResultSet(ResultSet rs) throws SQLException {
+        Member memberDebited = memberRepository.findById(rs.getString("member_debited_id")).orElseThrow();
+        FinancialAccount accountCredited = financialAccountRepository
+                .findFinancialAccountById(rs.getString("financial_account_id")).orElseThrow();
+        return CollectivityTransaction.builder()
+                .id(rs.getString("id"))
+                .amount(rs.getDouble("amount"))
+                .creationDate(rs.getDate("creation_date").toLocalDate())
+                .type(TransactionType.valueOf(rs.getString("transaction_type")))
+                .memberDebited(memberDebited)
+                .accountCredited(accountCredited)
+                .build();
     }
 }

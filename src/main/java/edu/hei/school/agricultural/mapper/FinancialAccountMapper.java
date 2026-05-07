@@ -18,6 +18,7 @@ public class FinancialAccountMapper {
     public BankAccount mapBankFromResultSet(ResultSet resultSet) throws SQLException {
         return BankAccount.builder()
                 .id(resultSet.getString("id"))
+                .holderName(resultSet.getString("holder_name"))
                 .bankCode(resultSet.getInt("bank_code"))
                 .branchCode(resultSet.getInt("branch_code"))
                 .accountNumber(resultSet.getInt("account_number"))
@@ -30,7 +31,8 @@ public class FinancialAccountMapper {
                 .id(resultSet.getString("id"))
                 .holderName(resultSet.getString("holder_name"))
                 .mobileNumber(resultSet.getString("mobile_number"))
-                .mobileBankingService(resultSet.getString("service") == null ? null : MobileBankingService.valueOf(resultSet.getString("service")))
+                .mobileBankingService(resultSet.getString("service") == null ? null
+                        : MobileBankingService.valueOf(resultSet.getString("service")))
                 .build();
     }
 

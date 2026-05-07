@@ -18,19 +18,22 @@ public class MemberPaymentDtoMaper {
     private final FinancialAccountRepository financialAccountRepository;
 
     public MemberPayment mapToEntity(String memberIdentifier, CreateMemberPayment createMemberPayment) {
-        Member member = memberRepository.findById(memberIdentifier).orElseThrow(
-                () -> new NotFoundException("Member.id=" + memberIdentifier + " not found")
-        );
-        MembershipFee membershipFee = membershipFeeRepository.findById(createMemberPayment.getMembershipFeeIdentifier())
-                .orElseThrow(
-                        () -> new NotFoundException("MembershipFee.id=" + createMemberPayment.getMembershipFeeIdentifier() + " not found")
-                );
-        FinancialAccount financialAccount = financialAccountRepository.findFinancialAccountById(createMemberPayment.getAccountCreditedIdentifier())
-                .orElseThrow(() -> new NotFoundException("FinancialAccount.id=" + createMemberPayment.getAccountCreditedIdentifier() + " not found"));
+        Member member = memberRepository.findById(memberIdentifier)
+                .orElseThrow(() -> new NotFoundException("Member.id=" + memberIdentifier + " not found"));
+        MembershipFee membershipFee = membershipFeeRepository
+                .findById(createMemberPayment.getMembershipFeeIdentifier())
+                .orElseThrow(() -> new NotFoundException(
+                        "MembershipFee.id=" + createMemberPayment.getMembershipFeeIdentifier() + " not found"));
+        FinancialAccount financialAccount = financialAccountRepository
+                .findFinancialAccountById(createMemberPayment.getAccountCreditedIdentifier())
+                .orElseThrow(() -> new NotFoundException(
+                        "FinancialAccount.id=" + createMemberPayment.getAccountCreditedIdentifier() + " not found"));
 
         return MemberPayment.builder()
-                .paymentMode(createMemberPayment.getPaymentMode() == null ? null : PaymentMode.valueOf(createMemberPayment.getPaymentMode().name()))
-                .amount(createMemberPayment.getAmount())
+                .paymentMode(createMemberPayment.getPaymentMode() == null ? null
+                        : PaymentMode.valueOf(createMemberPayment.getPaymentMode().name()))
+                .amount(createMemberPayment.getAmount() == null ? null
+                        : createMemberPayment.getAmount().doubleValue())
                 .memberOwner(member)
                 .membershipFee(membershipFee)
                 .accountCredited(financialAccount)
@@ -40,10 +43,14 @@ public class MemberPaymentDtoMaper {
     public edu.hei.school.agricultural.controller.dto.MemberPayment mapToDto(MemberPayment memberPayment) {
         return edu.hei.school.agricultural.controller.dto.MemberPayment.builder()
                 .id(memberPayment.getId())
-                .paymentMode(memberPayment.getPaymentMode() == null ? null : edu.hei.school.agricultural.controller.dto.PaymentMode.valueOf(memberPayment.getPaymentMode().name()))
-                .accountCredited(financialAccountDtoMapper.mapToDto(memberPayment.getAccountCredited()))
+                .paymentMode(memberPayment.getPaymentMode() == null ? null
+                        : edu.hei.school.agricultural.controller.dto.PaymentMode
+                                .valueOf(memberPayment.getPaymentMode().name()))
+                .accountCredited(financialAccountDtoMapper.mapToDto(
+                        memberPayment.getAccountCredited(), null))
                 .creationDate(memberPayment.getCreationDate())
-                .amount(memberPayment.getAmount())
+                .amount(memberPayment.getAmount() == null ? null
+                        : memberPayment.getAmount().intValue())
                 .build();
     }
 }
