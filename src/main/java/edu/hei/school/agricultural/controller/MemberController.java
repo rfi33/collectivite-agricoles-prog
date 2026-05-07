@@ -15,15 +15,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-
 @RestController
 @RequiredArgsConstructor
 public class MemberController {
+
     private final MemberService memberService;
     private final MemberDtoMapper memberDtoMapper;
 
+    /**
+     * POST /members
+     * Retourne 201 conformément au YAML v0.0.6
+     */
     @PostMapping("/members")
     public ResponseEntity<?> createMembers(@RequestBody List<CreateMember> createMemberDtos) {
         try {
@@ -33,19 +35,16 @@ public class MemberController {
 
             List<Member> savedMembers = memberService.addNewMembers(convertedCreateMembers);
 
-            return ResponseEntity.status(HttpStatus.OK)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(savedMembers.stream()
                             .map(memberDtoMapper::mapToDto)
                             .toList());
         } catch (BadRequestException e) {
-            return ResponseEntity.status(BAD_REQUEST)
-                    .body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (NotFoundException e) {
-            return ResponseEntity.status(NOT_FOUND)
-                    .body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 }

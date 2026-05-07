@@ -1,5 +1,9 @@
 package edu.hei.school.agricultural.service;
 
+import edu.hei.school.agricultural.controller.dto.CollectivityInformation;
+import edu.hei.school.agricultural.controller.dto.CollectivityLocalStatistics;
+import edu.hei.school.agricultural.controller.dto.CollectivityOverallStatistics;
+import edu.hei.school.agricultural.controller.dto.MemberDescription;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -7,27 +11,26 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class StatisticsService {
-    
+
     private final DataSource dataSource;
-    
+
     /**
-     * Version push-down : tout le calcul est délégué à la base de données.
-     * Une seule requête agrège les statistiques membres avec calcul direct des montants impayés.
+     * GET /collectivites/{id}/statistics
+     * Retourne le montant encaissé et le montant impayé potentiel par membre actif
+     * sur une période donnée, conformément au YAML v0.0.5/v0.0.6.
      */
-    public List<Map<String, Object>> getMemberStatsByCollectivityAndPeriod(
+    public List<CollectivityLocalStatistics> getMemberStatsByCollectivityAndPeriod(
             String collectivityId, LocalDate from, LocalDate to) {
-        
+
         String sql = """
                 WITH member_payments AS (
-                    SELECT 
-                        m.id AS member_id,
+                    SELECT
+                        m.id        AS member_id,
                         m.first_name,
                         m.last_name,
                         m.email,
@@ -39,9 +42,9 @@ public class StatisticsService {
                            ON mp.member_debited_id = m.id
                           AND mp.creation_date BETWEEN ? AND ?
                           AND mp.financial_account_id IN (
-                                SELECT id FROM cash_account WHERE collectivity_id = ?
+                                SELECT id FROM cash_account           WHERE collectivity_id = ?
                                 UNION ALL
-                                SELECT id FROM bank_account WHERE collectivity_id = ?
+                                SELECT id FROM bank_account           WHERE collectivity_id = ?
                                 UNION ALL
                                 SELECT id FROM mobile_banking_account WHERE collectivity_id = ?
                           )
@@ -55,153 +58,156 @@ public class StatisticsService {
                       AND mf.status = 'ACTIVE'
                       AND mf.eligible_from <= ?
                 )
-                SELECT 
+                SELECT
                     mp.*,
                     GREATEST(0.0, (SELECT total_due FROM active_fees_total) - mp.earned_amount) AS unpaid_amount
                 FROM member_payments mp
                 ORDER BY mp.last_name, mp.first_name
                 """;
-        
-        List<Map<String, Object>> results = new ArrayList<>();
-        
+
+        List<CollectivityLocalStatistics> results = new ArrayList<>();
+
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            int paramIndex = 1;
-            ps.setDate(paramIndex++, Date.valueOf(from));
-            ps.setDate(paramIndex++, Date.valueOf(to));
-            ps.setString(paramIndex++, collectivityId);
-            ps.setString(paramIndex++, collectivityId);
-            ps.setString(paramIndex++, collectivityId);
-            ps.setString(paramIndex++, collectivityId);
-            ps.setString(paramIndex++, collectivityId);
-            ps.setDate(paramIndex++, Date.valueOf(to));
-            
+
+            int i = 1;
+            ps.setDate(i++, Date.valueOf(from));
+            ps.setDate(i++, Date.valueOf(to));
+            ps.setString(i++, collectivityId);
+            ps.setString(i++, collectivityId);
+            ps.setString(i++, collectivityId);
+            ps.setString(i++, collectivityId);
+            ps.setString(i++, collectivityId);
+            ps.setDate(i++, Date.valueOf(to));
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                row.put("member_id",      rs.getString("member_id"));
-                row.put("first_name",     rs.getString("first_name"));
-                row.put("last_name",      rs.getString("last_name"));
-                row.put("email",          rs.getString("email"));
-                row.put("occupation",     rs.getString("occupation"));
-                row.put("earned_amount",  rs.getDouble("earned_amount"));
-                row.put("unpaid_amount",  rs.getDouble("unpaid_amount"));
-                results.add(row);
+                MemberDescription memberDescription = MemberDescription.builder()
+                        .id(rs.getString("member_id"))
+                        .firstName(rs.getString("first_name"))
+                        .lastName(rs.getString("last_name"))
+                        .email(rs.getString("email"))
+                        .occupation(rs.getString("occupation"))
+                        .build();
+
+                results.add(CollectivityLocalStatistics.builder()
+                        .memberDescription(memberDescription)
+                        .earnedAmount(rs.getDouble("earned_amount"))
+                        .unpaidAmount(rs.getDouble("unpaid_amount"))
+                        .build());
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error computing member statistics", e);
         }
-        
+
         return results;
     }
-    
+
     /**
-     * Version push-down des statistiques globales : tout calculé dans une seule requête complexe.
+     * GET /collectivites/statistics
+     * Retourne le pourcentage global des membres à jour et le nombre de nouveaux adhérents
+     * par collectivité sur une période donnée, conformément au YAML v0.0.5/v0.0.6.
      */
-    public List<Map<String, Object>> getOverallStatisticsForAllCollectivities(
+    public List<CollectivityOverallStatistics> getOverallStatisticsForAllCollectivities(
             LocalDate from, LocalDate to) {
-        
+
         String sql = """
                 WITH collectivity_base AS (
-                    SELECT 
-                        c.id AS collectivity_id,
-                        c.name AS collectivity_name,
-                        c.number AS collectivity_number
+                    SELECT c.id AS collectivity_id, c.name, c.number
                     FROM collectivity c
                 ),
                 new_members_count AS (
-                    SELECT 
+                    SELECT
                         cm.collectivity_id,
-                        COUNT(DISTINCT CASE 
-                            WHEN COALESCE(cm.join_date, m.join_date) BETWEEN ? AND ? 
-                            THEN m.id 
+                        COUNT(DISTINCT CASE
+                            WHEN COALESCE(cm.join_date, m.join_date) BETWEEN ? AND ?
+                            THEN m.id
                         END) AS new_members
                     FROM collectivity_member cm
                     JOIN member m ON m.id = cm.member_id
                     GROUP BY cm.collectivity_id
                 ),
                 total_members_count AS (
-                    SELECT 
-                        collectivity_id,
-                        COUNT(*) AS total_members
+                    SELECT collectivity_id, COUNT(*) AS total_members
                     FROM collectivity_member
                     GROUP BY collectivity_id
                 ),
                 active_fees AS (
-                    SELECT 
-                        mf.collectivity_id,
-                        COALESCE(SUM(mf.amount), 0) AS total_due
+                    SELECT mf.collectivity_id, COALESCE(SUM(mf.amount), 0) AS total_due
                     FROM membership_fee mf
                     WHERE mf.status = 'ACTIVE'
                       AND mf.eligible_from <= ?
                     GROUP BY mf.collectivity_id
                 ),
                 members_up_to_date AS (
-                    SELECT 
+                    SELECT
                         cm.collectivity_id,
-                        COUNT(DISTINCT CASE 
+                        COUNT(DISTINCT CASE
                             WHEN COALESCE(
-                                (SELECT SUM(mp2.amount) 
-                                 FROM member_payment mp2 
-                                 WHERE mp2.member_debited_id = cm.member_id 
+                                (SELECT SUM(mp2.amount)
+                                 FROM member_payment mp2
+                                 WHERE mp2.member_debited_id = cm.member_id
                                    AND mp2.creation_date BETWEEN ? AND ?
                                    AND mp2.financial_account_id IN (
-                                       SELECT id FROM cash_account WHERE collectivity_id = cm.collectivity_id
+                                       SELECT id FROM cash_account           WHERE collectivity_id = cm.collectivity_id
                                        UNION ALL
-                                       SELECT id FROM bank_account WHERE collectivity_id = cm.collectivity_id
+                                       SELECT id FROM bank_account           WHERE collectivity_id = cm.collectivity_id
                                        UNION ALL
                                        SELECT id FROM mobile_banking_account WHERE collectivity_id = cm.collectivity_id
                                    )
                                 ), 0) >= COALESCE(af.total_due, 0)
-                            THEN cm.member_id 
+                            THEN cm.member_id
                         END) AS up_to_date_count
                     FROM collectivity_member cm
                     LEFT JOIN active_fees af ON af.collectivity_id = cm.collectivity_id
                     GROUP BY cm.collectivity_id
                 )
-                SELECT 
+                SELECT
                     cb.collectivity_id,
-                    cb.collectivity_name,
-                    cb.collectivity_number,
+                    cb.name,
+                    cb.number,
                     COALESCE(nmc.new_members, 0) AS new_members_number,
-                    CASE 
-                        WHEN COALESCE(tmc.total_members, 0) > 0 
-                        THEN ROUND((COALESCE(mud.up_to_date_count, 0)::numeric / tmc.total_members::numeric) * 100, 2)
-                        ELSE 100.0 
+                    CASE
+                        WHEN COALESCE(tmc.total_members, 0) > 0
+                        THEN ROUND((COALESCE(mud.up_to_date_count, 0)::numeric
+                                    / tmc.total_members::numeric) * 100, 2)
+                        ELSE 100.0
                     END AS overall_member_current_due_percentage
                 FROM collectivity_base cb
-                LEFT JOIN new_members_count nmc ON nmc.collectivity_id = cb.collectivity_id
-                LEFT JOIN total_members_count tmc ON tmc.collectivity_id = cb.collectivity_id
-                LEFT JOIN members_up_to_date mud ON mud.collectivity_id = cb.collectivity_id
-                ORDER BY cb.collectivity_name
+                LEFT JOIN new_members_count     nmc ON nmc.collectivity_id = cb.collectivity_id
+                LEFT JOIN total_members_count   tmc ON tmc.collectivity_id = cb.collectivity_id
+                LEFT JOIN members_up_to_date    mud ON mud.collectivity_id = cb.collectivity_id
+                ORDER BY cb.name
                 """;
-        
-        List<Map<String, Object>> results = new ArrayList<>();
-        
+
+        List<CollectivityOverallStatistics> results = new ArrayList<>();
+
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setDate(1, Date.valueOf(from));
             ps.setDate(2, Date.valueOf(to));
             ps.setDate(3, Date.valueOf(to));
             ps.setDate(4, Date.valueOf(from));
             ps.setDate(5, Date.valueOf(to));
-            
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                row.put("collectivity_id",                     rs.getString("collectivity_id"));
-                row.put("collectivity_name",                   rs.getString("collectivity_name"));
-                row.put("collectivity_number",                 rs.getObject("collectivity_number"));
-                row.put("new_members_number",                  rs.getInt("new_members_number"));
-                row.put("overall_member_current_due_percentage", rs.getDouble("overall_member_current_due_percentage"));
-                results.add(row);
+                CollectivityInformation collectivityInformation = CollectivityInformation.builder()
+                        .name(rs.getString("name"))
+                        .number(rs.getInt("number") == 0 && rs.wasNull() ? null : rs.getInt("number"))
+                        .build();
+
+                results.add(CollectivityOverallStatistics.builder()
+                        .collectivityInformation(collectivityInformation)
+                        .newMembersNumber(rs.getInt("new_members_number"))
+                        .overallMemberCurrentDuePercentage(rs.getDouble("overall_member_current_due_percentage"))
+                        .build());
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error computing overall statistics", e);
         }
-        
+
         return results;
     }
 }

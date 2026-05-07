@@ -1,12 +1,13 @@
 package edu.hei.school.agricultural.mapper;
 
+import edu.hei.school.agricultural.controller.dto.CollectivityActivityDTO;
 import edu.hei.school.agricultural.controller.dto.CreateCollectivityActivityDTO;
 import edu.hei.school.agricultural.entity.CollectivityActivity;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CollectivityActivityMapper {
-    
+
     public CollectivityActivity toEntity(CreateCollectivityActivityDTO dto, String collectivityId) {
         CollectivityActivity activity = new CollectivityActivity();
         activity.setLabel(dto.getLabel());
@@ -17,7 +18,7 @@ public class CollectivityActivityMapper {
         activity.setCollectivityId(collectivityId);
         return activity;
     }
-    
+
     public CollectivityActivityDTO toDTO(CollectivityActivity activity) {
         CollectivityActivityDTO dto = new CollectivityActivityDTO();
         dto.setId(activity.getId());

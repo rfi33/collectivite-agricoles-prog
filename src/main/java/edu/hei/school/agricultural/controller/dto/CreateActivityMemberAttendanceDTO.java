@@ -1,4 +1,3 @@
-// dto/CreateActivityMemberAttendanceDTO.java
 package edu.hei.school.agricultural.controller.dto;
 
 import edu.hei.school.agricultural.entity.AttendanceStatus;
