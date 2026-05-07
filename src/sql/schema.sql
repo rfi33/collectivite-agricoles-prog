@@ -134,3 +134,112 @@ CREATE TABLE collectivities_transactions (
                                              account_credited_id VARCHAR(50)    NOT NULL,
                                              payment_mode        payment_mode   NOT NULL
 );
+
+-- Run this after schema.sql
+-- Creates a unified view so the code can query "financial_accounts" as one table
+
+CREATE VIEW financial_accounts AS
+SELECT
+    id,
+    collectivity_id,
+    'CASH'          AS account_type,
+    NULL            AS amount,
+    NULL            AS holder_name,
+    NULL            AS mobile_money,
+    NULL            AS mobile_number,
+    NULL            AS bank_name,
+    NULL::INTEGER   AS bank_code,
+    NULL::INTEGER   AS bank_branch_code,
+    NULL::BIGINT    AS bank_account_number,
+    NULL::INTEGER   AS bank_account_key
+FROM cash_account
+
+UNION ALL
+
+SELECT
+    id,
+    collectivity_id,
+    'MOBILE_BANKING' AS account_type,
+    NULL             AS amount,
+    holder_name,
+    service          AS mobile_money,
+    mobile_number,
+    NULL             AS bank_name,
+    NULL::INTEGER    AS bank_code,
+    NULL::INTEGER    AS bank_branch_code,
+    NULL::BIGINT     AS bank_account_number,
+    NULL::INTEGER    AS bank_account_key
+FROM mobile_banking_account
+
+UNION ALL
+
+SELECT
+    id,
+    collectivity_id,
+    'BANK'           AS account_type,
+    NULL             AS amount,
+    holder_name,
+    NULL             AS mobile_money,
+    NULL             AS mobile_number,
+    bank_name::TEXT  AS bank_name,
+    bank_code,
+    branch_code      AS bank_branch_code,
+    account_number   AS bank_account_number,
+        key              AS bank_account_key
+        FROM bank_account;
+
+ALTER TABLE cash_account          ADD COLUMN IF NOT EXISTS amount NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE bank_account          ADD COLUMN IF NOT EXISTS amount NUMERIC(15,2) NOT NULL DEFAULT 0;
+ALTER TABLE mobile_banking_account ADD COLUMN IF NOT EXISTS amount NUMERIC(15,2) NOT NULL DEFAULT 0;
+
+DROP VIEW IF EXISTS financial_accounts;
+
+CREATE VIEW financial_accounts AS
+SELECT
+    id,
+    collectivity_id,
+    'CASH'          AS account_type,
+    amount,
+    NULL            AS holder_name,
+    NULL            AS mobile_money,
+    NULL            AS mobile_number,
+    NULL            AS bank_name,
+    NULL::INTEGER   AS bank_code,
+    NULL::INTEGER   AS bank_branch_code,
+    NULL::BIGINT    AS bank_account_number,
+    NULL::INTEGER   AS bank_account_key
+FROM cash_account
+
+UNION ALL
+
+SELECT
+    id,
+    collectivity_id,
+    'MOBILE_BANKING' AS account_type,
+    amount,
+    holder_name,
+    service          AS mobile_money,
+    mobile_number,
+    NULL             AS bank_name,
+    NULL::INTEGER    AS bank_code,
+    NULL::INTEGER    AS bank_branch_code,
+    NULL::BIGINT     AS bank_account_number,
+    NULL::INTEGER    AS bank_account_key
+FROM mobile_banking_account
+
+UNION ALL
+
+SELECT
+    id,
+    collectivity_id,
+    'BANK'           AS account_type,
+    amount,
+    holder_name,
+    NULL             AS mobile_money,
+    NULL             AS mobile_number,
+    bank_name::TEXT  AS bank_name,
+    bank_code,
+    branch_code      AS bank_branch_code,
+    account_number   AS bank_account_number,
+        key              AS bank_account_key
+        FROM bank_account;

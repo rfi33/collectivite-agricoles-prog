@@ -3,7 +3,7 @@ package com.collectivity.controller.dto;
 import lombok.*;
 
 @Data @Builder @NoArgsConstructor @AllArgsConstructor @EqualsAndHashCode
-public class MobileBankingAccountDto implements FinancialAccountDto {
+public class MobileBankingAccountDto {
     private String id;
     private String holderName;
     private MobileBankingService mobileBankingService;

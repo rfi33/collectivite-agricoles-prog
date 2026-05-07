@@ -51,9 +51,35 @@ public class FinancialAccountRepository {
         return Optional.empty();
     }
 
+    /**
+     * Updates the amount in the correct underlying table based on account_type.
+     * The financial_accounts VIEW is not directly updatable, so we route to the right table.
+     */
     public void updateAmount(String accountId, double newAmount) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE financial_accounts SET amount = ? WHERE id = ?")) {
+        // Determine which table owns this account
+        String typeSql = "SELECT account_type FROM financial_accounts WHERE id = ?";
+        String accountType = null;
+        try (PreparedStatement ps = connection.prepareStatement(typeSql)) {
+            ps.setString(1, accountId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) accountType = rs.getString("account_type");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (accountType == null) {
+            throw new RuntimeException("FinancialAccount not found: " + accountId);
+        }
+
+        String table = switch (accountType) {
+            case "CASH"           -> "cash_account";
+            case "MOBILE_BANKING" -> "mobile_banking_account";
+            case "BANK"           -> "bank_account";
+            default -> throw new RuntimeException("Unknown account type: " + accountType);
+        };
+
+        String updateSql = "UPDATE " + table + " SET amount = ? WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
             ps.setDouble(1, newAmount);
             ps.setString(2, accountId);
             ps.executeUpdate();

@@ -1,6 +1,6 @@
 package com.collectivity.repository;
 
-import com.collectivity.controller.dto.CollectivityInformation;
+import com.collectivity.controller.dto.CollectivityInformationDto;
 import com.collectivity.controller.dto.CollectivityLocalStatistics;
 import com.collectivity.controller.dto.CollectivityOverallStatistics;
 import com.collectivity.controller.dto.MemberDescription;
@@ -20,6 +20,7 @@ import java.util.List;
 public class StatisticsRepository {
 
     private final Connection connection;
+
     public List<CollectivityLocalStatistics> getLocalStatistics(
             String collectivityId, LocalDate from, LocalDate to) {
 
@@ -57,8 +58,8 @@ public class StatisticsRepository {
             duePs.setDate(2, java.sql.Date.valueOf(to));
             ResultSet dueRs = duePs.executeQuery();
             while (dueRs.next()) {
-                double feeAmount      = dueRs.getDouble("amount");
-                String frequency      = dueRs.getString("frequency");
+                double feeAmount       = dueRs.getDouble("amount");
+                String frequency       = dueRs.getString("frequency");
                 LocalDate eligibleFrom = dueRs.getDate("eligible_from").toLocalDate();
                 totalDue += computeOccurrencesOnPeriod(feeAmount, frequency, eligibleFrom, from, to);
             }
@@ -75,8 +76,8 @@ public class StatisticsRepository {
 
             ResultSet rs = earnedPs.executeQuery();
             while (rs.next()) {
-                double earned   = rs.getDouble("earned_amount");
-                double unpaid   = Math.max(0.0, totalDue - earned);
+                double earned = rs.getDouble("earned_amount");
+                double unpaid = Math.max(0.0, totalDue - earned);
 
                 MemberDescription memberDescription = MemberDescription.builder()
                         .id(rs.getString("member_id"))
@@ -102,9 +103,6 @@ public class StatisticsRepository {
     public List<CollectivityOverallStatistics> getOverallStatistics(
             LocalDate from, LocalDate to) {
 
-
-
-
         String newMembersSql = """
                 SELECT
                     c.id     AS collectivity_id,
@@ -118,7 +116,6 @@ public class StatisticsRepository {
                 GROUP BY c.id, c.name, c.number
                 ORDER BY c.name
                 """;
-
 
         String paidSql = """
                 SELECT
@@ -143,9 +140,9 @@ public class StatisticsRepository {
             ps.setDate(2, java.sql.Date.valueOf(to));
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String collId  = rs.getString("collectivity_id");
-                String membId  = rs.getString("member_id");
-                double paid    = rs.getDouble("paid_amount");
+                String collId = rs.getString("collectivity_id");
+                String membId = rs.getString("member_id");
+                double paid   = rs.getDouble("paid_amount");
                 paidByCollAndMember
                         .computeIfAbsent(collId, k -> new java.util.HashMap<>())
                         .put(membId, paid);
@@ -159,9 +156,9 @@ public class StatisticsRepository {
             ps.setDate(1, java.sql.Date.valueOf(to));
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String collId      = rs.getString("collectivity_id");
-                double feeAmount   = rs.getDouble("amount");
-                String frequency   = rs.getString("frequency");
+                String collId     = rs.getString("collectivity_id");
+                double feeAmount  = rs.getDouble("amount");
+                String frequency  = rs.getString("frequency");
                 LocalDate eligFrom = rs.getDate("eligible_from").toLocalDate();
                 double due = computeOccurrencesOnPeriod(feeAmount, frequency, eligFrom, from, to);
                 dueByColl.merge(collId, due, Double::sum);
@@ -196,7 +193,8 @@ public class StatisticsRepository {
                         ? (totalDue == 0.0 ? 100.0 : 0.0)
                         : (upToDateMembers * 100.0) / totalMembersWithPayments;
 
-                CollectivityInformation info = new CollectivityInformation();
+                // Fix: use CollectivityInformationDto (not CollectivityInformation)
+                CollectivityInformationDto info = new CollectivityInformationDto();
                 info.setName(collName);
                 info.setNumber(collNumber == 0 ? null : collNumber);
 
@@ -216,7 +214,6 @@ public class StatisticsRepository {
     private double computeOccurrencesOnPeriod(double feeAmount, String frequency,
                                                LocalDate eligibleFrom,
                                                LocalDate from, LocalDate to) {
-
         LocalDate effectiveStart = eligibleFrom.isAfter(from) ? eligibleFrom : from;
         if (effectiveStart.isAfter(to)) {
             return 0.0;
