@@ -4,7 +4,7 @@ import com.collectivity.entity.*;
 import com.collectivity.exception.BadRequestException;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.*;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,7 +33,8 @@ public class CollectivityService {
         for (Collectivity c : collectivities) {
             if (!c.hasEnoughMembers()) {
                 throw new BadRequestException(
-                        "Collectivity must have at least 10 members, got " + (c.getMembers() == null ? 0 : c.getMembers().size()));
+                        "Collectivity must have at least 10 members, got "
+                                + (c.getMembers() == null ? 0 : c.getMembers().size()));
             }
             if (!Boolean.TRUE.equals(c.getFederationApproval())) {
                 throw new BadRequestException("Collectivity must have federation approval");
@@ -77,17 +78,21 @@ public class CollectivityService {
         return financialAccountRepository.findByCollectivityId(collectivityId);
     }
 
-    public List<CollectivityTransaction> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
+    public List<CollectivityTransaction> getTransactions(
+            String collectivityId, LocalDate from, LocalDate to) {
         getCollectivityById(collectivityId);
         return transactionRepository.findByCollectivityAndPeriod(collectivityId, from, to);
     }
 
-    public List<MemberPayment> createMemberPayments(String memberId, List<CreateMemberPaymentRequest> requests) {
+    public List<MemberPayment> createMemberPayments(
+            String memberId, List<CreateMemberPaymentRequest> requests) {
+
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotFoundException("Member.id=" + memberId + " not found"));
 
         return requests.stream().map(req -> {
-            FinancialAccount account = financialAccountRepository.findById(req.getAccountCreditedIdentifier())
+            FinancialAccount account = financialAccountRepository
+                    .findById(req.getAccountCreditedIdentifier())
                     .orElseThrow(() -> new NotFoundException(
                             "FinancialAccount.id=" + req.getAccountCreditedIdentifier() + " not found"));
 
@@ -118,9 +123,9 @@ public class CollectivityService {
         }).toList();
     }
 
-    @lombok.Data
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CreateMemberPaymentRequest {
         private Integer amount;
         private String membershipFeeIdentifier;

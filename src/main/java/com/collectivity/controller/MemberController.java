@@ -32,19 +32,14 @@ public class MemberController {
             List<Member> entities = dtos.stream()
                     .map(memberDtoMapper::mapToEntity)
                     .toList();
-
-            return ResponseEntity.ok(
+            return ResponseEntity.status(CREATED).body(
                     memberService.addNewMembers(entities).stream()
                             .map(memberDtoMapper::mapToDto)
-                            .toList()
-            );
-
+                            .toList());
         } catch (BadRequestException e) {
             return ResponseEntity.status(BAD_REQUEST).body(e.getMessage());
-
         } catch (NotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(e.getMessage());
-
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
@@ -54,53 +49,37 @@ public class MemberController {
     public ResponseEntity<?> createPayments(
             @PathVariable String id,
             @RequestBody List<CreateMemberPaymentDto> dtos) {
-
         try {
             List<CollectivityService.CreateMemberPaymentRequest> requests = dtos.stream()
                     .map(dto -> new CollectivityService.CreateMemberPaymentRequest(
                             dto.getAmount(),
                             dto.getMembershipFeeIdentifier(),
                             dto.getAccountCreditedIdentifier(),
-                            dto.getPaymentMode() == null
-                                    ? null
-                                    : com.collectivity.entity.PaymentMode.valueOf(dto.getPaymentMode().name())
+                            dto.getPaymentMode() == null ? null
+                                    : com.collectivity.entity.PaymentMode.valueOf(
+                                            dto.getPaymentMode().name())
                     ))
                     .toList();
 
-            List<MemberPayment> payments =
-                    collectivityService.createMemberPayments(id, requests);
+            List<MemberPayment> payments = collectivityService.createMemberPayments(id, requests);
 
             List<MemberPaymentDto> response = payments.stream()
-                    .map(p -> {
-                        MemberPaymentDto dto = new MemberPaymentDto();
-
-                        dto.setId(p.getId());
-                        dto.setAmount(p.getAmount());
-
-                        dto.setPaymentMode(
-                                p.getPaymentMode() == null
-                                        ? null
-                                        : PaymentMode.valueOf(p.getPaymentMode().name())
-                        );
-
-                        dto.setAccountCredited(
-                                financialAccountDtoMapper.mapToDto(p.getAccountCredited())
-                        );
-
-                        dto.setCreationDate(p.getCreationDate());
-
-                        return dto;
-                    })
+                    .map(p -> MemberPaymentDto.builder()
+                            .id(p.getId())
+                            .amount(p.getAmount())
+                            .paymentMode(p.getPaymentMode() == null ? null
+                                    : PaymentMode.valueOf(p.getPaymentMode().name()))
+                            .accountCredited(financialAccountDtoMapper.mapToDto(p.getAccountCredited()))
+                            .creationDate(p.getCreationDate())
+                            .build())
                     .toList();
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.status(CREATED).body(response);
 
         } catch (BadRequestException e) {
             return ResponseEntity.status(BAD_REQUEST).body(e.getMessage());
-
         } catch (NotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(e.getMessage());
-
         } catch (Exception e) {
             return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(e.getMessage());
         }

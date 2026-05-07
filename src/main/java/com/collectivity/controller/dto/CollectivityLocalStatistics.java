@@ -1,16 +1,8 @@
 package com.collectivity.controller.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
+@Data @NoArgsConstructor @AllArgsConstructor @Builder @EqualsAndHashCode
 public class CollectivityLocalStatistics {
     private MemberDescription memberDescription;
     private Double earnedAmount;

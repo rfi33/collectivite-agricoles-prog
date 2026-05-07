@@ -29,7 +29,8 @@ public class CollectivityController {
     @GetMapping("/collectivities/{id}")
     public ResponseEntity<?> getById(@PathVariable String id) {
         try {
-            return ResponseEntity.ok(collectivityDtoMapper.mapToDto(collectivityService.getCollectivityById(id)));
+            return ResponseEntity.ok(
+                    collectivityDtoMapper.mapToDto(collectivityService.getCollectivityById(id)));
         } catch (NotFoundException e) {
             return ResponseEntity.status(NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
@@ -43,7 +44,7 @@ public class CollectivityController {
             List<Collectivity> entities = dtos.stream()
                     .map(collectivityDtoMapper::mapToEntity)
                     .toList();
-            return ResponseEntity.ok(
+            return ResponseEntity.status(CREATED).body(
                     collectivityService.createCollectivities(entities).stream()
                             .map(collectivityDtoMapper::mapToDto)
                             .toList());

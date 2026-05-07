@@ -18,13 +18,16 @@ public class MemberService {
     public List<Member> addNewMembers(List<Member> members) {
         for (Member m : members) {
             if (Boolean.FALSE.equals(m.getRegistrationFeePaid())) {
-                throw new BadRequestException("Registration fee not paid for member " + m.getFirstName());
+                throw new BadRequestException(
+                        "Registration fee not paid for member " + m.getFirstName());
             }
             if (Boolean.FALSE.equals(m.getMembershipDuesPaid())) {
-                throw new BadRequestException("Membership dues not paid for member " + m.getFirstName());
+                throw new BadRequestException(
+                        "Membership dues not paid for member " + m.getFirstName());
             }
             if (!m.refereesAreEligible()) {
-                throw new BadRequestException("Referees are not eligible for member " + m.getFirstName());
+                throw new BadRequestException(
+                        "Referees are not eligible for member " + m.getFirstName());
             }
             m.setId(UUID.randomUUID().toString());
         }

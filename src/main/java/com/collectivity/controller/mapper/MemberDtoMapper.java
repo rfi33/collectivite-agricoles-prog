@@ -1,10 +1,7 @@
 package com.collectivity.controller.mapper;
 
 import com.collectivity.controller.dto.*;
-import com.collectivity.entity.Collectivity;
-import com.collectivity.entity.Gender;
-import com.collectivity.entity.Member;
-import com.collectivity.entity.MemberOccupation;
+import com.collectivity.entity.*;
 import com.collectivity.exception.NotFoundException;
 import com.collectivity.repository.CollectivityRepository;
 import com.collectivity.repository.MemberRepository;
