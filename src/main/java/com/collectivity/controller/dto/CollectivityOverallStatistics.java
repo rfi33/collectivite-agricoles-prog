@@ -1,16 +1,18 @@
 package com.collectivity.controller.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class CollectivityOverallStatistics {
-    private CollectivityInformation collectivityInformation;
+    private CollectivityInformationDto collectivityInformation;
     private Integer newMembersNumber;
     private Double overallMemberCurrentDuePercentage;
 }

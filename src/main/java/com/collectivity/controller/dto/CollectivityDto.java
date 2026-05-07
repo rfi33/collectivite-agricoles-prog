@@ -1,17 +1,22 @@
 package com.collectivity.controller.dto;
 
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-@Data
-@SuperBuilder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class CollectivityDto extends CollectivityInformationDto {
+@EqualsAndHashCode
+public class CollectivityDto {
     private String id;
+    private String name;
+    private Integer number;
     private String location;
     private CollectivityStructureDto structure;
     private List<MemberDto> members;

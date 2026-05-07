@@ -1,14 +1,27 @@
 package com.collectivity.controller.dto;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = CashAccountDto.class,         name = "CASH"),
-        @JsonSubTypes.Type(value = MobileBankingAccountDto.class, name = "MOBILE_BANKING"),
-        @JsonSubTypes.Type(value = BankAccountDto.class,          name = "BANK")
-})
-public interface FinancialAccountDto {
-    String getId();
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class FinancialAccountDto {
+    private String id;
+    private String type;
+    private Double amount;
+    private String holderName;
+    private String mobileBankingService;
+    private String mobileNumber;
+    private String bankName;
+    private Integer bankCode;
+    private Integer bankBranchCode;
+    private Long bankAccountNumber;
+    private Integer bankAccountKey;
 }
